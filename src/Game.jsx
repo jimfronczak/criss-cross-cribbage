@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   dealRound,
-  getLegalPlacements,
   discardToCrib,
   placeCard,
   scoreRound,
   startNewRound,
   checkGameOver,
 } from './game/index.js';
+import { getAIPlacement, getAIDiscard } from './ai/strategy.js';
 import './Game.css';
 
 const PLAYER_NAMES = ['You', 'Opponent 1', 'Partner', 'Opponent 2'];
@@ -251,21 +251,17 @@ export default function Game() {
     setCardBack(CARD_BACKS[Math.floor(Math.random() * CARD_BACKS.length)]);
   }, []);
 
-  /* AI auto-play */
+  /* AI auto-play: heuristic strategy replaces random moves */
   useEffect(() => {
     if (!gs || gs.phase === 'score' || gs.currentPlayerIndex === 0) return;
 
     const timer = setTimeout(() => {
-      const pi = gs.currentPlayerIndex;
-
       if (gs.phase === 'discard') {
-        const idx = Math.floor(Math.random() * gs.hands[pi].length);
-        setGs(discardToCrib(gs, idx));
+        const { cardIndex } = getAIDiscard(gs);
+        setGs(discardToCrib(gs, cardIndex));
       } else if (gs.phase === 'place') {
-        const cardIdx = Math.floor(Math.random() * gs.hands[pi].length);
-        const legal = getLegalPlacements(gs);
-        const cell = legal[Math.floor(Math.random() * legal.length)];
-        setGs(placeCard(gs, cardIdx, cell.row, cell.col));
+        const { cardIndex, row, col } = getAIPlacement(gs);
+        setGs(placeCard(gs, cardIndex, row, col));
       }
     }, 400);
 

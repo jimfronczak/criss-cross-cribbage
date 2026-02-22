@@ -10,6 +10,7 @@ Brief summary of decisions and changes from development sessions, for future ref
   - `docs/finish_phase_2_cribbage.plan.md` – Phase 2 checklist
   - `docs/finish_phase_3_rules.plan.md` – Phase 3 checklist
   - `docs/finish_phase_4_ui.plan.md` – Phase 4 checklist
+  - `docs/finish_phase_5_ai.plan.md` – Phase 5 checklist
 - **Plans (Cursor originals):** `C:\Users\fronczak\.cursor\plans\` (Phases 1–2 only; Phase 3+ created directly in `docs/`)
 
 ## Phase 1
@@ -49,12 +50,24 @@ Brief summary of decisions and changes from development sessions, for future ref
 - Phase 3 checklist: `docs/finish_phase_3_rules.plan.md`
 - Phase 4 checklist: `docs/finish_phase_4_ui.plan.md`
 
+## Phase 5 – AI for partner and opponents ✅ complete
+- **`src/ai/strategy.js`** – Heuristic AI: `evaluateLine` (partial/complete line scoring), `getAIPlacement` (best card+cell by column/row delta), `getAIDiscard` (retained hand value ± crib impact).
+- **`src/ai/strategy.test.js`** – Tests: evaluateLine correctness, valid move returns, full AI round, scoring check.
+- **`src/Game.jsx`** – AI auto-play now uses heuristic strategy instead of random moves.
+- **`src/App.jsx`** – Test dashboard includes Phase 5 AI tests (orange).
+- AI evaluates every (card, cell) combo, scores the resulting column/row improvement, and picks the move that maximises own team's lines while minimising the opponent's.
+- Crib discard balances retained hand value vs crib impact (help own crib, hurt opponent's).
+
+## Useful references
+- Main game plan: `docs/criss_cross_cribbage_game.plan.md`
+- Phase 5 checklist: `docs/finish_phase_5_ai.plan.md`
+
 ## Future: Multiplayer (post-Phase 7)
 - Noted in the main game plan under "6. Multiplayer – real opponents (future)".
 - Recommended approach: Node.js + WebSockets with room codes. The current `rules.js` engine can run server-side with no changes.
 - Alternatives: Firebase/Supabase (serverless), WebRTC (peer-to-peer), or pass-and-play (local).
 - Hybrid mode possible: 0–3 AI + 1–4 humans in the same game.
 
-**Phase 4 is complete.** Phase 5 (AI for partner and opponents) has not been started.
+**Phase 5 is complete.** Phase 6 (Full game flow and polish) has not been started.
 
-*Last updated: Added multiplayer notes to plan; no Phase 5 work started.*
+*Last updated: Phase 5 marked complete; no Phase 6 work started.*

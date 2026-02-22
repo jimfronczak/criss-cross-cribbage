@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Game from './Game.jsx'
 import { runScoreTests } from './game/score.test.js'
 import { runRulesTests } from './game/rules.test.js'
+import { runStrategyTests } from './ai/strategy.test.js'
 import { cardToString } from './game/state.js'
 import './App.css'
 
@@ -33,10 +34,12 @@ function TestSection({ title, results, color }) {
 function TestDashboard() {
   const [scoreResults, setScoreResults] = useState(null)
   const [rulesResults, setRulesResults] = useState(null)
+  const [stratResults, setStratResults] = useState(null)
 
   const runAll = () => {
     setScoreResults(runScoreTests())
     setRulesResults(runRulesTests())
+    setStratResults(runStrategyTests())
   }
 
   return (
@@ -47,6 +50,7 @@ function TestDashboard() {
       </button>
       <TestSection title="Phase 2 — Scoring" results={scoreResults} color="#4fc3f7" />
       <TestSection title="Phase 3 — Rules & State" results={rulesResults} color="#81c784" />
+      <TestSection title="Phase 5 — AI Strategy" results={stratResults} color="#ffb74d" />
     </div>
   )
 }
