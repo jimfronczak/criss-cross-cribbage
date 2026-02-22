@@ -1,0 +1,63 @@
+/* ---- top nav ---- */
+.top-nav {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 8px 0;
+}
+.top-nav button {
+  background: transparent;
+  color: #777;
+  border: 1px solid #444;
+  padding: 4px 16px;
+  border-radius: 6px 6px 0 0;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.top-nav button:hover {
+  color: #ccc;
+  border-color: #777;
+}
+.top-nav .nav-active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom-color: transparent;
+}
+
+/* ---- test dashboard (carried from Phase 2/3) ---- */
+.test-results {
+  margin-top: 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.test-results ul {
+  list-style: none;
+  padding-left: 0;
+}
+.test-ok { color: #66bb6a; }
+.test-fail { color: #ef5350; }
+
+.test-cards-fixed {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #0d47a1;
+  background: #e3f2fd;
+  border: 1px solid #90caf9;
+}
+.test-cards-random {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #1b5e20;
+  background: #e8f5e9;
+  border: 1px solid #81c784;
+}

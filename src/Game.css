@@ -1,0 +1,305 @@
+/* ============================================================
+   Criss Cross Cribbage – Game UI (Phase 4)
+   ============================================================ */
+
+/* ---- layout ---- */
+.game {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 12px 16px 32px;
+  text-align: center;
+}
+.game h1 {
+  font-size: 2rem;
+  margin: 0 0 8px;
+}
+.intro {
+  color: #aaa;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* ---- header ---- */
+.hdr {
+  margin-bottom: 12px;
+}
+.hdr h2 {
+  font-size: 1.3rem;
+  margin: 0 0 6px;
+}
+.scores {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.score-sep {
+  color: #555;
+}
+.team-a { color: #4fc3f7; }
+.team-b { color: #ef5350; }
+
+.meta {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: #777;
+}
+.heels {
+  color: #ffd700;
+  font-weight: 700;
+  margin: 6px 0 2px;
+}
+.status {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  min-height: 1.4em;
+}
+
+/* ---- cut card callout ---- */
+.cut-info {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+.cut-badge {
+  display: inline-block;
+  background: #fff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1px solid #ffd700;
+}
+
+/* ---- card face (inline) ---- */
+.cf {
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.cf-red { color: #d32f2f; }
+.cf-blk { color: #212121; }
+
+/* ---- board ---- */
+.board-wrapper {
+  margin: 0 auto 16px;
+}
+.board-col-label {
+  font-size: 0.75rem;
+  color: #4fc3f7;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+.board-row-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.board-row-label {
+  font-size: 0.65rem;
+  color: #ef5350;
+  line-height: 1.3;
+  text-align: center;
+  flex-shrink: 0;
+  width: 36px;
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, 60px);
+  grid-template-rows: repeat(5, 80px);
+  gap: 4px;
+  padding: 10px;
+  background: #16613b;
+  border-radius: 10px;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* cells */
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  user-select: none;
+}
+.cell-empty {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+}
+.cell-filled {
+  background: #fff;
+}
+.cell-cut {
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.35);
+}
+.cell-click {
+  cursor: pointer;
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.12);
+}
+.cell-click:hover {
+  background: rgba(255, 215, 0, 0.25);
+}
+
+/* ---- hand ---- */
+.hand-area {
+  margin: 14px 0 4px;
+}
+.hand-area h3 {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: #999;
+  font-weight: 500;
+}
+.hand {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* individual hand card */
+.hcard {
+  width: 52px;
+  height: 74px;
+  background: #fff;
+  border-radius: 6px;
+  border: 2px solid #bbb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  user-select: none;
+}
+.hcard-act {
+  cursor: pointer;
+}
+.hcard-act:hover {
+  border-color: #888;
+  transform: translateY(-3px);
+}
+.hcard-sel {
+  border-color: #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  transform: translateY(-6px);
+}
+.hcard-rank {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.hcard-suit {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* discard button bar */
+.discard-bar {
+  margin-top: 8px;
+}
+.btn-disc {
+  background: #ef5350 !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 8px 22px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.btn-disc:hover {
+  background: #e53935 !important;
+}
+
+/* ---- round result ---- */
+.rr {
+  margin: 20px 0 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+.rr h3 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+.rr-cols {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 12px;
+}
+.rr-team {
+  text-align: left;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+.rr-team h4 {
+  margin: 0 0 2px;
+  font-size: 0.9rem;
+}
+.rr-total {
+  font-weight: 700;
+  border-top: 1px solid #555;
+  padding-top: 3px;
+  margin-top: 3px;
+}
+.rr-peg {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffd700;
+  margin: 6px 0;
+}
+.rr-scores {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 12px;
+}
+
+/* game over */
+.go h2 {
+  color: #ffd700;
+  margin: 4px 0 8px;
+}
+
+/* ---- buttons ---- */
+.btn-pri {
+  background: #4fc3f7 !important;
+  color: #1a1a2e !important;
+  border: none !important;
+  padding: 10px 28px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-pri:hover {
+  background: #29b6f6 !important;
+}
+.btn-sec {
+  background: transparent !important;
+  color: #666 !important;
+  border: 1px solid #444 !important;
+  padding: 5px 16px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.btn-sec:hover {
+  color: #bbb !important;
+  border-color: #777 !important;
+}
+
+/* ---- footer ---- */
+.foot {
+  margin-top: 24px;
+}
