@@ -1,10 +1,10 @@
 /* ============================================================
-   Criss Cross Cribbage – Game UI (Phase 4)
+   Criss Cross Cribbage – Game UI
    ============================================================ */
 
 /* ---- layout ---- */
 .game {
-  max-width: 620px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 12px 16px 32px;
   text-align: center;
@@ -35,9 +35,7 @@
   font-weight: 700;
   margin-bottom: 6px;
 }
-.score-sep {
-  color: #555;
-}
+.score-sep { color: #555; }
 .team-a { color: #4fc3f7; }
 .team-b { color: #ef5350; }
 
@@ -64,7 +62,7 @@
 .cut-info {
   font-size: 0.85rem;
   color: #aaa;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .cut-badge {
   display: inline-block;
@@ -86,9 +84,156 @@
 .cf-red { color: #d32f2f; }
 .cf-blk { color: #212121; }
 
+/* ---- card back (color/pattern set via inline style per game) ---- */
+.card-back {
+  width: 44px;
+  height: 62px;
+  border-radius: 5px;
+  border: 2px solid #3949ab;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      #1a237e,
+      #1a237e 3px,
+      #283593 3px,
+      #283593 6px
+    );
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+/* inline style overrides background & borderColor when backStyle is provided */
+
+/* smaller card backs for vertical side hands */
+.cb-v {
+  width: 38px;
+  height: 52px;
+}
+
+/* ================================================================== */
+/*  TABLE LAYOUT – 4 hands around the board                           */
+/* ================================================================== */
+
+.table {
+  display: grid;
+  grid-template-areas:
+    ".    top    ."
+    "left center right"
+    ".    bottom .";
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto auto;
+  gap: 10px;
+  justify-items: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+.table-top    { grid-area: top; }
+.table-left   { grid-area: left; }
+.table-center { grid-area: center; }
+.table-right  { grid-area: right; }
+.table-bottom { grid-area: bottom; }
+
+/* ---- other-hand (partner / opponents) ---- */
+.other-hand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 8px;
+  transition: box-shadow 0.2s;
+}
+.oh-active {
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+}
+
+.oh-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.oh-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.65rem;
+  color: #ccc;
+}
+
+/* horizontal card row (partner at top) */
+.oh-cards-h {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* vertical card column (opponents on sides) */
+.oh-cards-v {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.oh-cards-v > * {
+  margin-top: -28px;
+}
+.oh-cards-v > *:first-child {
+  margin-top: 0;
+}
+
+/* face-up card in other-hand */
+.oh-card {
+  width: 44px;
+  height: 62px;
+  background: #fff;
+  border-radius: 5px;
+  border: 2px solid #bbb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.oh-card-v {
+  width: 38px;
+  height: 52px;
+}
+.oh-rank {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.oh-suit {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+/* toggle button for partner cards */
+.btn-toggle {
+  background: transparent !important;
+  color: #888 !important;
+  border: 1px solid #555 !important;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  margin-top: 2px;
+}
+.btn-toggle:hover {
+  color: #ccc !important;
+  border-color: #888 !important;
+}
+
 /* ---- board ---- */
-.board-wrapper {
-  margin: 0 auto 16px;
+.board-area {
+  text-align: center;
 }
 .board-col-label {
   font-size: 0.75rem;
@@ -96,7 +241,7 @@
   margin-bottom: 4px;
   letter-spacing: 0.5px;
 }
-.board-row-group {
+.board-inner {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -108,7 +253,7 @@
   line-height: 1.3;
   text-align: center;
   flex-shrink: 0;
-  width: 36px;
+  width: 30px;
 }
 .board {
   display: grid;
@@ -150,9 +295,9 @@
   background: rgba(255, 215, 0, 0.25);
 }
 
-/* ---- hand ---- */
+/* ---- human hand (bottom, interactive) ---- */
 .hand-area {
-  margin: 14px 0 4px;
+  margin: 6px 0 4px;
 }
 .hand-area h3 {
   margin: 0 0 8px;
@@ -167,7 +312,6 @@
   flex-wrap: wrap;
 }
 
-/* individual hand card */
 .hcard {
   width: 52px;
   height: 74px;
@@ -265,7 +409,6 @@
   margin-bottom: 12px;
 }
 
-/* game over */
 .go h2 {
   color: #ffd700;
   margin: 4px 0 8px;

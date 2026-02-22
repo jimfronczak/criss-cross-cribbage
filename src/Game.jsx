@@ -7,13 +7,23 @@ import {
   scoreRound,
   startNewRound,
   checkGameOver,
-  getTeam,
 } from './game/index.js';
 import './Game.css';
 
 const PLAYER_NAMES = ['You', 'Opponent 1', 'Partner', 'Opponent 2'];
 const SUIT_SYMBOL = { H: '♥', D: '♦', C: '♣', S: '♠' };
 const RANK_LABEL = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' };
+
+const CARD_BACKS = [
+  { bg: 'repeating-linear-gradient(45deg,#1a237e,#1a237e 3px,#283593 3px,#283593 6px)', border: '#3949ab' },
+  { bg: 'repeating-linear-gradient(-45deg,#6a1b1b,#6a1b1b 3px,#7c2d2d 3px,#7c2d2d 6px)', border: '#b71c1c' },
+  { bg: 'repeating-linear-gradient(60deg,#1b5e20,#1b5e20 3px,#2e7d32 3px,#2e7d32 6px)', border: '#43a047' },
+  { bg: 'repeating-linear-gradient(135deg,#4a148c,#4a148c 3px,#6a1b9a 3px,#6a1b9a 6px)', border: '#8e24aa' },
+  { bg: 'repeating-linear-gradient(30deg,#bf360c,#bf360c 3px,#d84315 3px,#d84315 6px)', border: '#ff5722' },
+  { bg: 'repeating-linear-gradient(-60deg,#004d40,#004d40 3px,#00695c 3px,#00695c 6px)', border: '#26a69a' },
+  { bg: 'repeating-linear-gradient(75deg,#263238,#263238 3px,#37474f 3px,#37474f 6px)', border: '#546e7a' },
+  { bg: 'repeating-linear-gradient(-30deg,#3e2723,#3e2723 3px,#4e342e 3px,#4e342e 6px)', border: '#795548' },
+];
 
 function cardLabel(card) {
   const rank = RANK_LABEL[card.rank] || String(card.rank);
@@ -38,6 +48,13 @@ function CardFace({ card, className = '', onClick }) {
       {cardLabel(card)}
     </span>
   );
+}
+
+function CardBack({ className = '', backStyle }) {
+  const style = backStyle
+    ? { background: backStyle.bg, borderColor: backStyle.border }
+    : {};
+  return <div className={`card-back ${className}`} style={style} />;
 }
 
 function StatusBar({ gameState, isHumanTurn, selectedCard }) {
@@ -65,10 +82,10 @@ function StatusBar({ gameState, isHumanTurn, selectedCard }) {
 
 function Board({ board, canPlace, onCellClick }) {
   return (
-    <div className="board-wrapper">
-      <div className="board-col-label">&#8592; Your Columns (Team A) &#8594;</div>
-      <div className="board-row-group">
-        <div className="board-row-label">&#8593;<br/>Their<br/>Rows<br/>(Team B)<br/>&#8595;</div>
+    <div className="board-area">
+      <div className="board-col-label">&#8592; Your Columns &#8594;</div>
+      <div className="board-inner">
+        <div className="board-row-label">&#8593;<br/>Their<br/>Rows<br/>&#8595;</div>
         <div className="board">
           {board.map((row, ri) =>
             row.map((cell, ci) => {
@@ -98,7 +115,46 @@ function Board({ board, canPlace, onCellClick }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Player hand                                                        */
+/*  Other players' hands (face up or face down)                        */
+/* ------------------------------------------------------------------ */
+
+function OtherHand({ hand, faceUp, label, active, vertical, backStyle }) {
+  if (hand.length === 0) {
+    return (
+      <div className={`other-hand ${vertical ? 'other-v' : 'other-h'} ${active ? 'oh-active' : ''}`}>
+        <div className="oh-label">{label}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`other-hand ${vertical ? 'other-v' : 'other-h'} ${active ? 'oh-active' : ''}`}>
+      <div className="oh-label">
+        {label}
+        <span className="oh-count">{hand.length}</span>
+      </div>
+      <div className={`oh-cards ${vertical ? 'oh-cards-v' : 'oh-cards-h'}`}>
+        {hand.map((card, i) =>
+          faceUp ? (
+            <div key={i} className={`oh-card ${vertical ? 'oh-card-v' : ''}`}>
+              <span className={`oh-rank ${isRed(card) ? 'cf-red' : 'cf-blk'}`}>
+                {RANK_LABEL[card.rank] || card.rank}
+              </span>
+              <span className={`oh-suit ${isRed(card) ? 'cf-red' : 'cf-blk'}`}>
+                {SUIT_SYMBOL[card.suit]}
+              </span>
+            </div>
+          ) : (
+            <CardBack key={i} className={vertical ? 'cb-v' : 'cb-h'} backStyle={backStyle} />
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Human player's hand (interactive)                                  */
 /* ------------------------------------------------------------------ */
 
 function PlayerHand({ hand, selected, active, onSelect }) {
@@ -184,15 +240,18 @@ export default function Game() {
   const [selected, setSelected] = useState(null);
   const [roundResult, setRoundResult] = useState(null);
   const [gameOverInfo, setGameOverInfo] = useState(null);
+  const [showPartner, setShowPartner] = useState(false);
+  const [cardBack, setCardBack] = useState(CARD_BACKS[0]);
 
   const newGame = useCallback(() => {
     setGs(dealRound(0));
     setSelected(null);
     setRoundResult(null);
     setGameOverInfo(null);
+    setCardBack(CARD_BACKS[Math.floor(Math.random() * CARD_BACKS.length)]);
   }, []);
 
-  /* AI auto-play: when it's not the human's turn, make a random move */
+  /* AI auto-play */
   useEffect(() => {
     if (!gs || gs.phase === 'score' || gs.currentPlayerIndex === 0) return;
 
@@ -269,6 +328,7 @@ export default function Game() {
 
   const human = gs.currentPlayerIndex === 0;
   const canPlace = human && gs.phase === 'place' && selected !== null;
+  const inPlay = gs.phase !== 'score';
 
   return (
     <div className="game">
@@ -286,7 +346,7 @@ export default function Game() {
           <span>Crib: {gs.crib.length}/4</span>
         </div>
         {gs.hisHeels && (
-          <div className="heels">His Heels! Cut is a Jack — dealer's team pegs 2</div>
+          <div className="heels">His Heels! Cut is a Jack — dealer&apos;s team pegs 2</div>
         )}
         <StatusBar gameState={gs} isHumanTurn={human} selectedCard={selected} />
       </div>
@@ -296,27 +356,78 @@ export default function Game() {
         Cut card: <CardFace card={gs.cutCard} className="cut-badge" />
       </div>
 
-      {/* Board */}
-      <Board board={gs.board} canPlace={canPlace} onCellClick={handleCellClick} />
-
-      {/* Hand + discard button */}
-      {gs.phase !== 'score' && (
-        <>
-          <PlayerHand
-            hand={gs.hands[0]}
-            selected={selected}
-            active={human}
-            onSelect={handleHandClick}
+      {/* ===== Game table: 4 hands around the board ===== */}
+      <div className="table">
+        {/* Partner (top) */}
+        <div className="table-top">
+          <OtherHand
+            hand={gs.hands[2]}
+            faceUp={showPartner}
+            label="Partner"
+            active={gs.currentPlayerIndex === 2 && inPlay}
+            vertical={false}
+            backStyle={cardBack}
           />
-          {human && gs.phase === 'discard' && selected !== null && (
-            <div className="discard-bar">
-              <button className="btn-disc" onClick={handleDiscard}>
-                Discard to Crib
-              </button>
-            </div>
+          {gs.hands[2].length > 0 && (
+            <button
+              className="btn-toggle"
+              onClick={() => setShowPartner((v) => !v)}
+            >
+              {showPartner ? 'Hide cards' : 'Show cards'}
+            </button>
           )}
-        </>
-      )}
+        </div>
+
+        {/* Opponent 1 (left) */}
+        <div className="table-left">
+          <OtherHand
+            hand={gs.hands[1]}
+            faceUp={false}
+            label="Opp 1"
+            active={gs.currentPlayerIndex === 1 && inPlay}
+            vertical={true}
+            backStyle={cardBack}
+          />
+        </div>
+
+        {/* Board (center) */}
+        <div className="table-center">
+          <Board board={gs.board} canPlace={canPlace} onCellClick={handleCellClick} />
+        </div>
+
+        {/* Opponent 2 (right) */}
+        <div className="table-right">
+          <OtherHand
+            hand={gs.hands[3]}
+            faceUp={false}
+            label="Opp 2"
+            active={gs.currentPlayerIndex === 3 && inPlay}
+            vertical={true}
+            backStyle={cardBack}
+          />
+        </div>
+
+        {/* Human (bottom) */}
+        <div className="table-bottom">
+          {inPlay && (
+            <>
+              <PlayerHand
+                hand={gs.hands[0]}
+                selected={selected}
+                active={human}
+                onSelect={handleHandClick}
+              />
+              {human && gs.phase === 'discard' && selected !== null && (
+                <div className="discard-bar">
+                  <button className="btn-disc" onClick={handleDiscard}>
+                    Discard to Crib
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
 
       {/* Round result */}
       {roundResult && (
