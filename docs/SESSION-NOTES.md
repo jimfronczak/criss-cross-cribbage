@@ -49,6 +49,12 @@ Brief summary of decisions and changes from development sessions, for future ref
 - Phase 3 checklist: `docs/finish_phase_3_rules.plan.md`
 - Phase 4 checklist: `docs/finish_phase_4_ui.plan.md`
 
+## Future: Multiplayer (post-Phase 7)
+- Noted in the main game plan under "6. Multiplayer – real opponents (future)".
+- Recommended approach: Node.js + WebSockets with room codes. The current `rules.js` engine can run server-side with no changes.
+- Alternatives: Firebase/Supabase (serverless), WebRTC (peer-to-peer), or pass-and-play (local).
+- Hybrid mode possible: 0–3 AI + 1–4 humans in the same game.
+
 **Phase 4 is complete.** Phase 5 (AI for partner and opponents) has not been started.
 
-*Last updated: Phase 4 marked complete; no Phase 5 work started.*
+*Last updated: Added multiplayer notes to plan; no Phase 5 work started.*

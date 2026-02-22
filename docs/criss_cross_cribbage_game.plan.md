@@ -102,6 +102,29 @@ References: [CrossCribb rules](https://ultraboardgames.com/crosscribb/game-rules
 - **Sound**: Optional card-place and win sounds (local files, no network).
 - **Android store**: Wrap the same PWA in a Trusted Web Activity (e.g. Bubblewrap) to publish an APK if desired.
 
+### 6. Multiplayer – real opponents (future)
+
+**Goal:** Replace 1–3 AI players with real humans so 2–4 people can play together.
+
+**Recommended approach – Node.js + WebSockets:**
+- A small Node.js server hosts the game state and runs the same `rules.js` engine.
+- Players create or join a "room" via a short room code.
+- Each player's browser connects via WebSocket; the server sends each player only their own hand and the public board state.
+- Moves are sent to the server, validated, and broadcast to all players.
+- Any empty seats can be filled by AI (hybrid mode: 0–3 AI + 1–4 humans).
+
+**Alternative approaches (lighter weight):**
+- **Firebase / Supabase Realtime DB** – serverless shared state; easiest to set up, free tier covers small games.
+- **WebRTC peer-to-peer** – no ongoing server; one player hosts, others connect directly. More complex but zero hosting costs.
+- **Pass-and-play** – all players share one device, taking turns. Simplest to implement (minimal code changes) but awkward UX.
+
+**Why the current architecture helps:**
+- Game logic is already separated from the UI (`rules.js`, `score.js` are pure functions with no browser dependencies).
+- The same engine that runs in the browser today can run on a Node.js server with no changes.
+- The UI already follows a "send move, receive state" pattern — switching from local state to server-pushed state is a straightforward refactor.
+
+**This is a post-Phase 7 feature.** The single-player PWA should be complete before adding multiplayer.
+
 ---
 
 ## Suggested file structure (high level)
