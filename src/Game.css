@@ -1,5 +1,5 @@
 /* ============================================================
-   Criss Cross Cribbage – Game UI
+   Criss Cross Cribbage – Game UI (Phase 6 polish)
    ============================================================ */
 
 /* ---- layout ---- */
@@ -25,24 +25,56 @@
 }
 .hdr h2 {
   font-size: 1.3rem;
-  margin: 0 0 6px;
+  margin: 0 0 8px;
 }
-.scores {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-.score-sep { color: #555; }
 .team-a { color: #4fc3f7; }
 .team-b { color: #ef5350; }
+
+/* score track (progress bars toward 31) */
+.score-track {
+  max-width: 320px;
+  margin: 0 auto 8px;
+}
+.st-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.st-label {
+  width: 32px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: right;
+  flex-shrink: 0;
+}
+.st-bar {
+  flex: 1;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.st-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+.st-fill-a { background: #4fc3f7; }
+.st-fill-b { background: #ef5350; }
+.st-val {
+  width: 40px;
+  font-size: 0.7rem;
+  color: #999;
+  text-align: left;
+  flex-shrink: 0;
+}
 
 .meta {
   display: flex;
   justify-content: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 12px 16px;
   font-size: 0.8rem;
   color: #777;
 }
@@ -56,6 +88,23 @@
   font-size: 0.95rem;
   font-weight: 500;
   min-height: 1.4em;
+}
+
+/* dealer badge */
+.dealer-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffd700;
+  color: #1a1a2e;
+  font-size: 0.6rem;
+  font-weight: 800;
+  margin-left: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 /* ---- cut card callout ---- */
@@ -84,26 +133,17 @@
 .cf-red { color: #d32f2f; }
 .cf-blk { color: #212121; }
 
-/* ---- card back (color/pattern set via inline style per game) ---- */
+/* ---- card back ---- */
 .card-back {
   width: 44px;
   height: 62px;
   border-radius: 5px;
   border: 2px solid #3949ab;
   background:
-    repeating-linear-gradient(
-      45deg,
-      #1a237e,
-      #1a237e 3px,
-      #283593 3px,
-      #283593 6px
-    );
+    repeating-linear-gradient(45deg, #1a237e, #1a237e 3px, #283593 3px, #283593 6px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
 }
-/* inline style overrides background & borderColor when backStyle is provided */
-
-/* smaller card backs for vertical side hands */
 .cb-v {
   width: 38px;
   height: 52px;
@@ -153,7 +193,7 @@
   color: #aaa;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 .oh-count {
   display: inline-flex;
@@ -167,15 +207,12 @@
   color: #ccc;
 }
 
-/* horizontal card row (partner at top) */
 .oh-cards-h {
   display: flex;
   gap: 4px;
   justify-content: center;
   flex-wrap: wrap;
 }
-
-/* vertical card column (opponents on sides) */
 .oh-cards-v {
   display: flex;
   flex-direction: column;
@@ -188,7 +225,6 @@
   margin-top: 0;
 }
 
-/* face-up card in other-hand */
 .oh-card {
   width: 44px;
   height: 62px;
@@ -215,7 +251,6 @@
   line-height: 1;
 }
 
-/* toggle button for partner cards */
 .btn-toggle {
   background: transparent !important;
   color: #888 !important;
@@ -266,7 +301,6 @@
   box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
-/* cells */
 .cell {
   display: flex;
   align-items: center;
@@ -281,6 +315,11 @@
 }
 .cell-filled {
   background: #fff;
+  animation: cell-pop 0.2s ease;
+}
+@keyframes cell-pop {
+  0%   { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1);   opacity: 1; }
 }
 .cell-cut {
   border: 2px solid #ffd700;
@@ -295,7 +334,7 @@
   background: rgba(255, 215, 0, 0.25);
 }
 
-/* ---- human hand (bottom, interactive) ---- */
+/* ---- human hand ---- */
 .hand-area {
   margin: 6px 0 4px;
 }
@@ -347,7 +386,6 @@
   line-height: 1;
 }
 
-/* discard button bar */
 .discard-bar {
   margin-top: 8px;
 }
@@ -376,6 +414,50 @@
   margin: 0 0 10px;
   font-size: 1.1rem;
 }
+
+/* crib reveal */
+.rr-crib {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 8px;
+}
+.rr-crib-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ccc;
+}
+.rr-crib-cards {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rr-card {
+  display: inline-block;
+  background: #fff;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+.rr-card-cut {
+  border: 1px solid #ffd700;
+}
+.rr-crib-plus {
+  color: #888;
+  font-size: 0.75rem;
+}
+.rr-crib-score {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+
 .rr-cols {
   display: flex;
   justify-content: center;
@@ -442,7 +524,70 @@
   border-color: #777 !important;
 }
 
-/* ---- footer ---- */
 .foot {
   margin-top: 24px;
+}
+
+/* ================================================================== */
+/*  RESPONSIVE – mobile / tablet                                       */
+/* ================================================================== */
+
+@media (max-width: 600px) {
+  .game { padding: 8px 8px 24px; }
+  .hdr h2 { font-size: 1.1rem; }
+  .meta { font-size: 0.7rem; gap: 8px; }
+
+  /* smaller board */
+  .board {
+    grid-template-columns: repeat(5, 48px);
+    grid-template-rows: repeat(5, 64px);
+    gap: 3px;
+    padding: 6px;
+  }
+  .cf { font-size: 0.75rem; }
+
+  /* smaller hand cards */
+  .hcard {
+    width: 44px;
+    height: 64px;
+  }
+  .hcard-rank { font-size: 0.9rem; }
+  .hcard-suit { font-size: 0.85rem; }
+
+  /* smaller other-hand cards */
+  .card-back { width: 36px; height: 50px; }
+  .cb-v { width: 32px; height: 44px; }
+  .oh-card { width: 36px; height: 50px; }
+  .oh-card-v { width: 32px; height: 44px; }
+  .oh-cards-v > * { margin-top: -22px; }
+
+  /* table gap */
+  .table { gap: 6px; }
+
+  /* round result */
+  .rr-cols { gap: 20px; }
+  .rr-crib { padding: 6px 8px; }
+}
+
+@media (max-width: 400px) {
+  .board {
+    grid-template-columns: repeat(5, 40px);
+    grid-template-rows: repeat(5, 54px);
+    gap: 2px;
+    padding: 5px;
+  }
+  .cf { font-size: 0.65rem; }
+  .hcard { width: 38px; height: 56px; }
+  .hcard-rank { font-size: 0.8rem; }
+  .hcard-suit { font-size: 0.75rem; }
+  .hand { gap: 5px; }
+
+  .card-back { width: 30px; height: 42px; }
+  .cb-v { width: 28px; height: 38px; }
+  .oh-card { width: 30px; height: 42px; }
+  .oh-card-v { width: 28px; height: 38px; }
+  .oh-cards-v > * { margin-top: -18px; }
+  .oh-rank { font-size: 0.7rem; }
+  .oh-suit { font-size: 0.65rem; }
+  .board-row-label { width: 22px; font-size: 0.55rem; }
 }

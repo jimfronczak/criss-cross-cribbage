@@ -6,6 +6,7 @@ import {
   scoreRound,
   startNewRound,
   checkGameOver,
+  getTeam,
 } from './game/index.js';
 import { getAIPlacement, getAIDiscard } from './ai/strategy.js';
 import './Game.css';
@@ -13,6 +14,7 @@ import './Game.css';
 const PLAYER_NAMES = ['You', 'Opponent 1', 'Partner', 'Opponent 2'];
 const SUIT_SYMBOL = { H: '♥', D: '♦', C: '♣', S: '♠' };
 const RANK_LABEL = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' };
+const WIN_TARGET = 31;
 
 const CARD_BACKS = [
   { bg: 'repeating-linear-gradient(45deg,#1a237e,#1a237e 3px,#283593 3px,#283593 6px)', border: '#3949ab' },
@@ -76,6 +78,30 @@ function StatusBar({ gameState, isHumanTurn, selectedCard }) {
   return <div className="status">{msg}</div>;
 }
 
+/* Score bar showing progress toward 31 */
+function ScoreTrack({ scores }) {
+  const pctA = Math.min(100, (scores[0] / WIN_TARGET) * 100);
+  const pctB = Math.min(100, (scores[1] / WIN_TARGET) * 100);
+  return (
+    <div className="score-track">
+      <div className="st-row">
+        <span className="st-label team-a">You</span>
+        <div className="st-bar">
+          <div className="st-fill st-fill-a" style={{ width: `${pctA}%` }} />
+        </div>
+        <span className="st-val">{scores[0]}/{WIN_TARGET}</span>
+      </div>
+      <div className="st-row">
+        <span className="st-label team-b">Opp</span>
+        <div className="st-bar">
+          <div className="st-fill st-fill-b" style={{ width: `${pctB}%` }} />
+        </div>
+        <span className="st-val">{scores[1]}/{WIN_TARGET}</span>
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Board                                                              */
 /* ------------------------------------------------------------------ */
@@ -115,14 +141,17 @@ function Board({ board, canPlace, onCellClick }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Other players' hands (face up or face down)                        */
+/*  Other players' hands                                               */
 /* ------------------------------------------------------------------ */
 
-function OtherHand({ hand, faceUp, label, active, vertical, backStyle }) {
+function OtherHand({ hand, faceUp, label, active, vertical, backStyle, isDealer }) {
   if (hand.length === 0) {
     return (
       <div className={`other-hand ${vertical ? 'other-v' : 'other-h'} ${active ? 'oh-active' : ''}`}>
-        <div className="oh-label">{label}</div>
+        <div className="oh-label">
+          {label}
+          {isDealer && <span className="dealer-badge">D</span>}
+        </div>
       </div>
     );
   }
@@ -131,6 +160,7 @@ function OtherHand({ hand, faceUp, label, active, vertical, backStyle }) {
     <div className={`other-hand ${vertical ? 'other-v' : 'other-h'} ${active ? 'oh-active' : ''}`}>
       <div className="oh-label">
         {label}
+        {isDealer && <span className="dealer-badge">D</span>}
         <span className="oh-count">{hand.length}</span>
       </div>
       <div className={`oh-cards ${vertical ? 'oh-cards-v' : 'oh-cards-h'}`}>
@@ -154,13 +184,16 @@ function OtherHand({ hand, faceUp, label, active, vertical, backStyle }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Human player's hand (interactive)                                  */
+/*  Human player's hand                                                */
 /* ------------------------------------------------------------------ */
 
-function PlayerHand({ hand, selected, active, onSelect }) {
+function PlayerHand({ hand, selected, active, onSelect, isDealer }) {
   return (
     <div className="hand-area">
-      <h3>Your Hand ({hand.length} card{hand.length !== 1 ? 's' : ''})</h3>
+      <h3>
+        Your Hand ({hand.length} card{hand.length !== 1 ? 's' : ''})
+        {isDealer && <span className="dealer-badge">D</span>}
+      </h3>
       <div className="hand">
         {hand.map((card, i) => (
           <div
@@ -189,10 +222,26 @@ function PlayerHand({ hand, selected, active, onSelect }) {
 /*  Round result                                                       */
 /* ------------------------------------------------------------------ */
 
-function RoundResultPanel({ result, gameOver, onNextRound, onNewGame }) {
+function RoundResultPanel({ result, crib, cutCard, gameOver, onNextRound, onNewGame }) {
   return (
     <div className="rr">
       <h3>Round Scores</h3>
+
+      {/* Crib reveal */}
+      <div className="rr-crib">
+        <span className="rr-crib-label">
+          Crib ({result.dealerTeam === 'A' ? 'Your team' : 'Opponents'}):
+        </span>
+        <span className="rr-crib-cards">
+          {crib.map((c, i) => (
+            <CardFace key={i} card={c} className="rr-card" />
+          ))}
+          <span className="rr-crib-plus">+</span>
+          <CardFace card={cutCard} className="rr-card rr-card-cut" />
+        </span>
+        <span className="rr-crib-score">= {result.cribScore} pts</span>
+      </div>
+
       <div className="rr-cols">
         <div className="rr-team">
           <h4 className="team-a">Your Team (Columns)</h4>
@@ -242,6 +291,7 @@ export default function Game() {
   const [gameOverInfo, setGameOverInfo] = useState(null);
   const [showPartner, setShowPartner] = useState(false);
   const [cardBack, setCardBack] = useState(CARD_BACKS[0]);
+  const [roundNum, setRoundNum] = useState(0);
 
   const newGame = useCallback(() => {
     setGs(dealRound(0));
@@ -249,9 +299,10 @@ export default function Game() {
     setRoundResult(null);
     setGameOverInfo(null);
     setCardBack(CARD_BACKS[Math.floor(Math.random() * CARD_BACKS.length)]);
+    setRoundNum(1);
   }, []);
 
-  /* AI auto-play: heuristic strategy replaces random moves */
+  /* AI auto-play */
   useEffect(() => {
     if (!gs || gs.phase === 'score' || gs.currentPlayerIndex === 0) return;
 
@@ -305,6 +356,7 @@ export default function Game() {
     setRoundResult(null);
     setSelected(null);
     setGameOverInfo(null);
+    setRoundNum((n) => n + 1);
   };
 
   /* ---- render ---- */
@@ -315,7 +367,7 @@ export default function Game() {
         <h1>Criss Cross Cribbage</h1>
         <p className="intro">
           4 players · 2 teams · Your team scores <strong>columns</strong>,
-          opponents score <strong>rows</strong>. First to 31 wins.
+          opponents score <strong>rows</strong>. First to {WIN_TARGET} wins.
         </p>
         <button className="btn-pri" onClick={newGame}>New Game</button>
       </div>
@@ -325,21 +377,21 @@ export default function Game() {
   const human = gs.currentPlayerIndex === 0;
   const canPlace = human && gs.phase === 'place' && selected !== null;
   const inPlay = gs.phase !== 'score';
+  const dealerTeam = getTeam(gs.dealerIndex);
 
   return (
     <div className="game">
       {/* Header */}
       <div className="hdr">
         <h2>Criss Cross Cribbage</h2>
-        <div className="scores">
-          <span className="team-a">Your Team: {gs.scores[0]}</span>
-          <span className="score-sep">|</span>
-          <span className="team-b">Opponents: {gs.scores[1]}</span>
-        </div>
+        <ScoreTrack scores={gs.scores} />
         <div className="meta">
+          <span>Round {roundNum}</span>
           <span>Dealer: {PLAYER_NAMES[gs.dealerIndex]}</span>
+          <span>
+            Crib ({dealerTeam === 'A' ? 'yours' : 'theirs'}): {gs.crib.length}/4
+          </span>
           <span>Phase: {gs.phase}</span>
-          <span>Crib: {gs.crib.length}/4</span>
         </div>
         {gs.hisHeels && (
           <div className="heels">His Heels! Cut is a Jack — dealer&apos;s team pegs 2</div>
@@ -363,6 +415,7 @@ export default function Game() {
             active={gs.currentPlayerIndex === 2 && inPlay}
             vertical={false}
             backStyle={cardBack}
+            isDealer={gs.dealerIndex === 2}
           />
           {gs.hands[2].length > 0 && (
             <button
@@ -383,6 +436,7 @@ export default function Game() {
             active={gs.currentPlayerIndex === 1 && inPlay}
             vertical={true}
             backStyle={cardBack}
+            isDealer={gs.dealerIndex === 1}
           />
         </div>
 
@@ -400,6 +454,7 @@ export default function Game() {
             active={gs.currentPlayerIndex === 3 && inPlay}
             vertical={true}
             backStyle={cardBack}
+            isDealer={gs.dealerIndex === 3}
           />
         </div>
 
@@ -412,6 +467,7 @@ export default function Game() {
                 selected={selected}
                 active={human}
                 onSelect={handleHandClick}
+                isDealer={gs.dealerIndex === 0}
               />
               {human && gs.phase === 'discard' && selected !== null && (
                 <div className="discard-bar">
@@ -429,6 +485,8 @@ export default function Game() {
       {roundResult && (
         <RoundResultPanel
           result={roundResult}
+          crib={gs.crib}
+          cutCard={gs.cutCard}
           gameOver={gameOverInfo}
           onNextRound={handleNextRound}
           onNewGame={newGame}

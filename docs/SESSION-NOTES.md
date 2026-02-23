@@ -68,6 +68,27 @@ Brief summary of decisions and changes from development sessions, for future ref
 - Alternatives: Firebase/Supabase (serverless), WebRTC (peer-to-peer), or pass-and-play (local).
 - Hybrid mode possible: 0–3 AI + 1–4 humans in the same game.
 
-**Phase 5 is complete.** Phase 6 (Full game flow and polish) has not been started.
+## Phase 6 – Full game flow and polish ✅ complete
+- **`src/Game.jsx`** changes:
+  - **Score track** (`ScoreTrack` component): progress bars showing each team's score toward 31.
+  - **Dealer badge**: gold "D" circle next to whichever player name is the current dealer (partner, opponents, and "Your Hand").
+  - **Round counter**: round number displayed in header meta.
+  - **Crib reveal**: `RoundResultPanel` now shows all 4 crib cards + cut card face-up with the crib score.
+  - **Crib ownership label**: header shows "(yours)" or "(theirs)" next to the crib count.
+- **`src/Game.css`** changes:
+  - Score track styles (`.score-track`, `.st-row`, `.st-bar`, `.st-fill`, animated width transition).
+  - Dealer badge style (`.dealer-badge`): gold circle with "D".
+  - Crib reveal styles (`.rr-crib`, `.rr-card`, etc.).
+  - `cell-pop` keyframe animation on `.cell-filled` — cards scale in when placed on the board.
+  - **Responsive breakpoints**: `@media (max-width: 600px)` and `@media (max-width: 400px)` — board cells, hand cards, card backs all shrink proportionally on smaller screens.
+- **`index.html`** changes:
+  - `user-scalable=no` added to viewport (prevents accidental zoom on mobile).
+  - `apple-mobile-web-app-capable` and `theme-color` meta tags for PWA-readiness.
+  - Title updated to "Criss Cross Cribbage".
 
-*Last updated: Phase 5 marked complete; no Phase 6 work started.*
+## Useful references
+- Phase 6 checklist: `docs/finish_phase_6_polish.plan.md`
+
+**Phase 6 is complete.** Phase 7 (PWA & offline) has not been started.
+
+*Last updated: Phase 6 marked complete.*
