@@ -21,7 +21,7 @@ import { scoreHand } from './score.js';
 
 export const TEAM_A_PLAYERS = [0, 2];
 export const TEAM_B_PLAYERS = [1, 3];
-const WIN_TARGET = 31;
+export const DEFAULT_WIN_TARGET = 31;
 
 export function getTeam(playerIndex) {
   return TEAM_A_PLAYERS.includes(playerIndex) ? 'A' : 'B';
@@ -307,12 +307,13 @@ export function startNewRound(currentDealerIndex, scores) {
 }
 
 /**
- * Check if either team has reached 31.
+ * Check if either team has reached the win target.
  * @param {[number,number]} scores
+ * @param {number} [winTarget]
  * @returns {{ over: boolean, winner: 'A'|'B'|null }}
  */
-export function checkGameOver(scores) {
-  if (scores[0] >= WIN_TARGET) return { over: true, winner: 'A' };
-  if (scores[1] >= WIN_TARGET) return { over: true, winner: 'B' };
+export function checkGameOver(scores, winTarget = DEFAULT_WIN_TARGET) {
+  if (scores[0] >= winTarget) return { over: true, winner: 'A' };
+  if (scores[1] >= winTarget) return { over: true, winner: 'B' };
   return { over: false, winner: null };
 }

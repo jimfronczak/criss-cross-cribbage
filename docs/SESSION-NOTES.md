@@ -147,4 +147,26 @@ Brief summary of decisions and changes from development sessions, for future ref
 
 **All 7 phases are complete.** The game is a fully functional PWA that can be installed on desktop, Android, and iOS and plays entirely offline after the first visit.
 
-*Last updated: Phase 7 (PWA & offline) completed.*
+## Post-Phase 7 additions
+
+### Difficulty levels (Easy / Medium / Hard)
+- **`src/ai/strategy.js`**: refactored into shared `scorePlacementMoves()` and `scoreDiscardMoves()` helpers, with `selectByDifficulty()` choosing how to pick from the ranked moves:
+  - **Easy**: 55% fully random, otherwise picks from top half
+  - **Medium**: picks randomly from the top 3 moves
+  - **Hard**: always picks the best move (ties broken randomly) — original behavior
+- `getAIPlacement()` and `getAIDiscard()` now accept an optional `difficulty` parameter (defaults to `'hard'`).
+- **`src/Game.jsx`**: start screen shows a difficulty selector (three buttons). Difficulty is passed to AI functions during auto-play.
+
+### Configurable win target
+- **`src/game/rules.js`**: `checkGameOver()` now accepts an optional `winTarget` parameter (defaults to `DEFAULT_WIN_TARGET = 31`). `DEFAULT_WIN_TARGET` is exported.
+- **`src/Game.jsx`**: start screen shows preset buttons (15, 21, 31, 61). `ScoreTrack` uses the selected target. `checkGameOver()` receives the selected target.
+
+### Hint button
+- **`src/ai/strategy.js`**: new `getHint(state)` function — runs the Hard-level evaluation on the human player's position and returns the best move.
+- **`src/Game.jsx`**: "Hint" button appears when it's the human's turn. Clicking it highlights the recommended card (gold pulsing glow) and, during placement phase, also highlights the recommended cell on the board. A text message explains the suggestion.
+
+### Rules tab
+- **`src/App.jsx`**: new `Rules` component with game overview, round flow, scoring reference table, teams/board explanation, and tips for new players. Added as a "Rules" tab between Game and Tests in the top nav.
+- **`src/App.css`**: rules page styles (section headers, scoring table, responsive layout).
+
+*Last updated: Post-Phase 7 additions (difficulty, hints, rules tab, configurable win target).*

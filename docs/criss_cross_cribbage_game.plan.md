@@ -242,6 +242,20 @@ You can build the app one phase at a time. Each phase has concrete steps and a s
 
 **What you'll understand:** A PWA is your same web app plus a manifest and a service worker that caches files; no separate "backend" or native app is required for offline or install.
 
+### Phase 8: Post-launch enhancements (addendum)
+
+**Goal:** Improve the player experience with difficulty options, in-game help, a rules reference, and flexible game length.
+
+1. **AI difficulty levels (Easy / Medium / Hard)** – Add a `difficulty` parameter to the AI placement and discard functions. Easy mode plays mostly randomly and ignores opponent blocking. Medium mode picks randomly from the top 3 evaluated moves. Hard mode (original behaviour) always picks the optimal move. The difficulty is selected on the start screen before beginning a game.
+
+2. **Hint system** – Add a "Hint" button that appears when it's the human player's turn. When clicked, the AI evaluates the board from the human's perspective (always using Hard-level analysis) and highlights the recommended card and board cell with a pulsing gold glow, plus a text explanation. Hints help new players learn strategy without having to figure out every move alone.
+
+3. **Rules tab** – Add a "Rules" tab alongside Game and Tests in the top navigation. The page covers: game overview, round flow (deal → discard → place → score), a scoring reference table (15s, pairs, runs, flushes, nobs, heels with examples), team/board layout explanation, and tips for new players. All static content, no game logic needed.
+
+4. **Configurable win target** – Replace the hardcoded 31-point target with a configurable value. The start screen offers preset buttons (15, 21, 31, 61) so players can choose shorter games for learning or longer games for experienced play. The score track, game-over check, and all UI references use the selected target.
+
+**What you'll understand:** All four enhancements reuse the existing game engine and AI — difficulty is just a selection policy over already-scored moves, hints are the AI advising instead of acting, the rules page is pure presentation, and the win target is a single parameter threaded through state. The core architecture doesn't change.
+
 ### How to use these phases
 
 - **One phase at a time:** Finish Phase 1 before starting Phase 2, and so on. At the end of each phase you have something runnable or testable.
@@ -252,8 +266,8 @@ You can build the app one phase at a time. Each phase has concrete steps and a s
 
 ## Summary
 
-- **Game**: Criss Cross Cribbage (CrossCribb rules): 5×5 grid, your team’s columns vs opponents’ rows, crib, first to 31.
-- **Players**: You + 1 AI partner vs 2 AI opponents; all AI runs in-browser with rule-based strategy.
+- **Game**: Criss Cross Cribbage (CrossCribb rules): 5×5 grid, your team’s columns vs opponents’ rows, crib, configurable target score (default 31).
+- **Players**: You + 1 AI partner vs 2 AI opponents; all AI runs in-browser with rule-based heuristic strategy at selectable difficulty (Easy/Medium/Hard).
 - **Platform**: One web app; PWA for offline and install on desktop and Android; no backend.
-- **Scope**: Start with core engine, cribbage scoring, one heuristic AI for all three agents, and a clear responsive UI; add PWA and offline next; then optional rules and polish.
+- **Scope**: Core engine, cribbage scoring, heuristic AI with difficulty levels, responsive UI with hint system and rules reference, PWA with offline support. Future: multiplayer (post-Phase 8).
 

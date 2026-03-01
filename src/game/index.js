@@ -24,4 +24,5 @@ export {
   getTeam,
   TEAM_A_PLAYERS,
   TEAM_B_PLAYERS,
+  DEFAULT_WIN_TARGET,
 } from './rules.js';

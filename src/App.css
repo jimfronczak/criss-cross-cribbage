@@ -24,6 +24,68 @@
   border-bottom-color: transparent;
 }
 
+/* ---- rules page ---- */
+.rules {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 16px 20px 40px;
+  text-align: left;
+  line-height: 1.7;
+  color: #ccc;
+}
+.rules h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+}
+.rules-section {
+  margin-bottom: 24px;
+}
+.rules-section h3 {
+  color: #4fc3f7;
+  font-size: 1.05rem;
+  margin: 0 0 8px;
+  border-bottom: 1px solid rgba(79, 195, 247, 0.2);
+  padding-bottom: 4px;
+}
+.rules-section p {
+  margin: 0 0 8px;
+}
+.rules-section ol,
+.rules-section ul {
+  margin: 0 0 8px;
+  padding-left: 24px;
+}
+.rules-section li {
+  margin-bottom: 6px;
+}
+.rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 8px 0;
+}
+.rules-table th {
+  background: rgba(255, 255, 255, 0.06);
+  text-align: left;
+  padding: 6px 10px;
+  font-weight: 700;
+  color: #fff;
+  border-bottom: 2px solid #444;
+}
+.rules-table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.rules-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+.rules-note {
+  font-size: 0.82rem;
+  color: #999;
+  font-style: italic;
+}
+
 /* ---- test dashboard (carried from Phase 2/3) ---- */
 .test-results {
   margin-top: 1rem;

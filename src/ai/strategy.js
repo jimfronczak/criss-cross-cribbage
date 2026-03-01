@@ -1,13 +1,20 @@
 /**
- * AI strategy for Criss Cross Cribbage (Phase 5).
+ * AI strategy for Criss Cross Cribbage.
  * Heuristic-based: evaluates each legal move by estimating its impact
  * on the AI's own lines vs the opponent's lines. No ML, no network.
+ *
+ * Supports three difficulty levels:
+ *   'easy'   – mostly random, ignores opponent blocking
+ *   'medium' – picks randomly from top 3 moves
+ *   'hard'   – exhaustive evaluation, always picks the best move
  *
  * Team A (players 0,2) owns columns; Team B (players 1,3) owns rows.
  */
 
 import { scoreHand } from '../game/score.js';
 import { getLegalPlacements, getTeam } from '../game/rules.js';
+
+export const DIFFICULTIES = ['easy', 'medium', 'hard'];
 
 /* ------------------------------------------------------------------ */
 /*  Line evaluation                                                    */
@@ -31,7 +38,6 @@ export function evaluateLine(cards, cutCard) {
   let score = 0;
   const values = cards.map((c) => CARD_VALUE(c.rank));
 
-  // 15s: every subset that sums to 15 = 2 pts
   for (let mask = 1; mask < (1 << cards.length); mask++) {
     let sum = 0;
     for (let i = 0; i < cards.length; i++) {
@@ -40,14 +46,12 @@ export function evaluateLine(cards, cutCard) {
     if (sum === 15) score += 2;
   }
 
-  // Pairs: same rank = 2 pts per pair
   for (let i = 0; i < cards.length; i++) {
     for (let j = i + 1; j < cards.length; j++) {
       if (cards[i].rank === cards[j].rank) score += 2;
     }
   }
 
-  // Runs: 3+ consecutive ranks, duplicates multiply
   const rankCounts = {};
   cards.forEach((c) => {
     rankCounts[c.rank] = (rankCounts[c.rank] || 0) + 1;
@@ -100,108 +104,141 @@ function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-/* ------------------------------------------------------------------ */
-/*  Placement                                                          */
-/* ------------------------------------------------------------------ */
-
 /**
- * Choose the best (card, cell) for the current AI player.
- *
- * For every legal (card, cell) combination:
- *   1. Compute the score delta for the column and the row.
- *   2. Net = own-line delta − opponent-line delta.
- *   3. Pick the move with the highest net (ties broken randomly).
- *
- * @param {import('../game/state.js').GameState} state
- * @returns {{ cardIndex: number, row: number, col: number }}
+ * Score all (card, cell) combinations for the given player.
+ * Returns an array sorted best-first: [{ cardIndex, row, col, net }].
  */
-export function getAIPlacement(state) {
-  const pi = state.currentPlayerIndex;
-  const team = getTeam(pi);
-  const hand = state.hands[pi];
+function scorePlacementMoves(state, playerIndex) {
+  const team = getTeam(playerIndex);
+  const hand = state.hands[playerIndex];
   const board = state.board;
   const cutCard = state.cutCard;
   const legal = getLegalPlacements(state);
 
-  let bestScore = -Infinity;
-  let bestMoves = [];
+  const scored = [];
 
   for (let ci = 0; ci < hand.length; ci++) {
     const card = hand[ci];
-
     for (const { row, col } of legal) {
-      const colBefore = gatherColumn(board, col);
-      const colAfter = [...colBefore, card];
-
-      const rowBefore = gatherRow(board, row);
-      const rowAfter = [...rowBefore, card];
-
       const colDelta =
-        evaluateLine(colAfter, cutCard) - evaluateLine(colBefore, cutCard);
+        evaluateLine([...gatherColumn(board, col), card], cutCard) -
+        evaluateLine(gatherColumn(board, col), cutCard);
       const rowDelta =
-        evaluateLine(rowAfter, cutCard) - evaluateLine(rowBefore, cutCard);
+        evaluateLine([...gatherRow(board, row), card], cutCard) -
+        evaluateLine(gatherRow(board, row), cutCard);
 
-      // Team A maximises columns, Team B maximises rows
       const net = team === 'A' ? colDelta - rowDelta : rowDelta - colDelta;
-
-      if (net > bestScore) {
-        bestScore = net;
-        bestMoves = [{ cardIndex: ci, row, col }];
-      } else if (net === bestScore) {
-        bestMoves.push({ cardIndex: ci, row, col });
-      }
+      scored.push({ cardIndex: ci, row, col, net });
     }
   }
 
-  return pickRandom(bestMoves);
+  scored.sort((a, b) => b.net - a.net);
+  return scored;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Crib discard                                                       */
-/* ------------------------------------------------------------------ */
-
 /**
- * Choose the best card to discard to the crib.
- *
- * For each card in hand:
- *   retainedValue = evaluateLine(remaining hand)
- *   cribImpact    = evaluateLine(crib + this card)
- *   score = retainedValue + cribImpact  (if dealer's team)
- *   score = retainedValue − cribImpact  (if not dealer's team)
- *
- * @param {import('../game/state.js').GameState} state
- * @returns {{ cardIndex: number }}
+ * Score all discard options for the given player.
+ * Returns an array sorted best-first: [{ cardIndex, score }].
  */
-export function getAIDiscard(state) {
-  const pi = state.currentPlayerIndex;
-  const team = getTeam(pi);
+function scoreDiscardMoves(state, playerIndex) {
+  const team = getTeam(playerIndex);
   const dealerTeam = getTeam(state.dealerIndex);
-  const hand = state.hands[pi];
+  const hand = state.hands[playerIndex];
   const crib = state.crib;
   const cutCard = state.cutCard;
   const isOurCrib = team === dealerTeam;
 
-  let bestScore = -Infinity;
-  let bestIndices = [];
+  const scored = [];
 
   for (let ci = 0; ci < hand.length; ci++) {
-    const card = hand[ci];
-
     const remaining = hand.filter((_, i) => i !== ci);
     const retainedValue = evaluateLine(remaining, cutCard);
-
-    const cribWithCard = [...crib, card];
-    const cribValue = evaluateLine(cribWithCard, cutCard);
-
+    const cribValue = evaluateLine([...crib, hand[ci]], cutCard);
     const score = retainedValue + (isOurCrib ? cribValue : -cribValue);
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestIndices = [ci];
-    } else if (score === bestScore) {
-      bestIndices.push(ci);
-    }
+    scored.push({ cardIndex: ci, score });
   }
 
-  return { cardIndex: pickRandom(bestIndices) };
+  scored.sort((a, b) => b.score - a.score);
+  return scored;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Difficulty selection helpers                                        */
+/* ------------------------------------------------------------------ */
+
+function selectByDifficulty(sortedMoves, difficulty) {
+  if (sortedMoves.length === 0) return sortedMoves[0];
+
+  switch (difficulty) {
+    case 'easy': {
+      if (Math.random() < 0.55) return pickRandom(sortedMoves);
+      const ownOnly = sortedMoves.slice(0, Math.max(1, Math.ceil(sortedMoves.length / 2)));
+      return pickRandom(ownOnly);
+    }
+    case 'medium': {
+      const topN = sortedMoves.slice(0, Math.min(3, sortedMoves.length));
+      return pickRandom(topN);
+    }
+    case 'hard':
+    default: {
+      const best = sortedMoves[0];
+      const ties = sortedMoves.filter(
+        (m) => (m.net ?? m.score) === (best.net ?? best.score),
+      );
+      return pickRandom(ties);
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Public API                                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Choose a (card, cell) for the current AI player.
+ * @param {import('../game/state.js').GameState} state
+ * @param {'easy'|'medium'|'hard'} [difficulty='hard']
+ * @returns {{ cardIndex: number, row: number, col: number }}
+ */
+export function getAIPlacement(state, difficulty = 'hard') {
+  const moves = scorePlacementMoves(state, state.currentPlayerIndex);
+  const pick = selectByDifficulty(moves, difficulty);
+  return { cardIndex: pick.cardIndex, row: pick.row, col: pick.col };
+}
+
+/**
+ * Choose the best card to discard to the crib.
+ * @param {import('../game/state.js').GameState} state
+ * @param {'easy'|'medium'|'hard'} [difficulty='hard']
+ * @returns {{ cardIndex: number }}
+ */
+export function getAIDiscard(state, difficulty = 'hard') {
+  const moves = scoreDiscardMoves(state, state.currentPlayerIndex);
+  const pick = selectByDifficulty(moves, difficulty);
+  return { cardIndex: pick.cardIndex };
+}
+
+/**
+ * Get a hint for the human player (player 0).
+ * Always uses 'hard' analysis to give the best advice.
+ * @param {import('../game/state.js').GameState} state
+ * @returns {{ cardIndex: number, row?: number, col?: number } | null}
+ */
+export function getHint(state) {
+  if (state.currentPlayerIndex !== 0) return null;
+
+  if (state.phase === 'place') {
+    const moves = scorePlacementMoves(state, 0);
+    if (moves.length === 0) return null;
+    const best = moves[0];
+    return { cardIndex: best.cardIndex, row: best.row, col: best.col };
+  }
+
+  if (state.phase === 'discard') {
+    const moves = scoreDiscardMoves(state, 0);
+    if (moves.length === 0) return null;
+    return { cardIndex: moves[0].cardIndex };
+  }
+
+  return null;
 }

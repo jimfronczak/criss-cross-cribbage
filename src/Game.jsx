@@ -7,14 +7,15 @@ import {
   startNewRound,
   checkGameOver,
   getTeam,
+  DEFAULT_WIN_TARGET,
 } from './game/index.js';
-import { getAIPlacement, getAIDiscard } from './ai/strategy.js';
+import { getAIPlacement, getAIDiscard, getHint, DIFFICULTIES } from './ai/strategy.js';
 import './Game.css';
 
 const PLAYER_NAMES = ['You', 'Opponent 1', 'Partner', 'Opponent 2'];
 const SUIT_SYMBOL = { H: '♥', D: '♦', C: '♣', S: '♠' };
 const RANK_LABEL = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' };
-const WIN_TARGET = 31;
+const WIN_TARGET_OPTIONS = [15, 21, 31, 61];
 
 const CARD_BACKS = [
   { bg: 'repeating-linear-gradient(45deg,#1a237e,#1a237e 3px,#283593 3px,#283593 6px)', border: '#3949ab' },
@@ -78,10 +79,9 @@ function StatusBar({ gameState, isHumanTurn, selectedCard }) {
   return <div className="status">{msg}</div>;
 }
 
-/* Score bar showing progress toward 31 */
-function ScoreTrack({ scores }) {
-  const pctA = Math.min(100, (scores[0] / WIN_TARGET) * 100);
-  const pctB = Math.min(100, (scores[1] / WIN_TARGET) * 100);
+function ScoreTrack({ scores, winTarget }) {
+  const pctA = Math.min(100, (scores[0] / winTarget) * 100);
+  const pctB = Math.min(100, (scores[1] / winTarget) * 100);
   return (
     <div className="score-track">
       <div className="st-row">
@@ -89,14 +89,14 @@ function ScoreTrack({ scores }) {
         <div className="st-bar">
           <div className="st-fill st-fill-a" style={{ width: `${pctA}%` }} />
         </div>
-        <span className="st-val">{scores[0]}/{WIN_TARGET}</span>
+        <span className="st-val">{scores[0]}/{winTarget}</span>
       </div>
       <div className="st-row">
         <span className="st-label team-b">Opp</span>
         <div className="st-bar">
           <div className="st-fill st-fill-b" style={{ width: `${pctB}%` }} />
         </div>
-        <span className="st-val">{scores[1]}/{WIN_TARGET}</span>
+        <span className="st-val">{scores[1]}/{winTarget}</span>
       </div>
     </div>
   );
@@ -106,7 +106,7 @@ function ScoreTrack({ scores }) {
 /*  Board                                                              */
 /* ------------------------------------------------------------------ */
 
-function Board({ board, canPlace, onCellClick }) {
+function Board({ board, canPlace, onCellClick, hintCell }) {
   return (
     <div className="board-area">
       <div className="board-col-label">&#8592; Your Columns &#8594;</div>
@@ -118,6 +118,7 @@ function Board({ board, canPlace, onCellClick }) {
               const isCut = ri === 2 && ci === 2;
               const empty = cell === null;
               const clickable = empty && canPlace;
+              const isHint = hintCell && hintCell.row === ri && hintCell.col === ci;
               return (
                 <div
                   key={`${ri}-${ci}`}
@@ -125,7 +126,8 @@ function Board({ board, canPlace, onCellClick }) {
                     'cell' +
                     (empty ? ' cell-empty' : ' cell-filled') +
                     (isCut ? ' cell-cut' : '') +
-                    (clickable ? ' cell-click' : '')
+                    (clickable ? ' cell-click' : '') +
+                    (isHint ? ' cell-hint' : '')
                   }
                   onClick={() => clickable && onCellClick(ri, ci)}
                 >
@@ -187,7 +189,7 @@ function OtherHand({ hand, faceUp, label, active, vertical, backStyle, isDealer 
 /*  Human player's hand                                                */
 /* ------------------------------------------------------------------ */
 
-function PlayerHand({ hand, selected, active, onSelect, isDealer }) {
+function PlayerHand({ hand, selected, active, onSelect, isDealer, hintIndex }) {
   return (
     <div className="hand-area">
       <h3>
@@ -201,7 +203,8 @@ function PlayerHand({ hand, selected, active, onSelect, isDealer }) {
             className={
               'hcard' +
               (selected === i ? ' hcard-sel' : '') +
-              (active ? ' hcard-act' : '')
+              (active ? ' hcard-act' : '') +
+              (hintIndex === i ? ' hcard-hint' : '')
             }
             onClick={() => active && onSelect(i)}
           >
@@ -292,6 +295,9 @@ export default function Game() {
   const [showPartner, setShowPartner] = useState(false);
   const [cardBack, setCardBack] = useState(CARD_BACKS[0]);
   const [roundNum, setRoundNum] = useState(0);
+  const [difficulty, setDifficulty] = useState('medium');
+  const [winTarget, setWinTarget] = useState(DEFAULT_WIN_TARGET);
+  const [hint, setHint] = useState(null);
 
   const newGame = useCallback(() => {
     setGs(dealRound(0));
@@ -300,6 +306,7 @@ export default function Game() {
     setGameOverInfo(null);
     setCardBack(CARD_BACKS[Math.floor(Math.random() * CARD_BACKS.length)]);
     setRoundNum(1);
+    setHint(null);
   }, []);
 
   /* AI auto-play */
@@ -308,26 +315,31 @@ export default function Game() {
 
     const timer = setTimeout(() => {
       if (gs.phase === 'discard') {
-        const { cardIndex } = getAIDiscard(gs);
+        const { cardIndex } = getAIDiscard(gs, difficulty);
         setGs(discardToCrib(gs, cardIndex));
       } else if (gs.phase === 'place') {
-        const { cardIndex, row, col } = getAIPlacement(gs);
+        const { cardIndex, row, col } = getAIPlacement(gs, difficulty);
         setGs(placeCard(gs, cardIndex, row, col));
       }
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [gs]);
+  }, [gs, difficulty]);
 
   /* Compute scores when board fills up */
   useEffect(() => {
     if (gs?.phase === 'score' && !roundResult) {
       const r = scoreRound(gs);
       setRoundResult(r);
-      const go = checkGameOver(r.newScores);
+      const go = checkGameOver(r.newScores, winTarget);
       if (go.over) setGameOverInfo(go);
     }
-  }, [gs?.phase, roundResult]);
+  }, [gs?.phase, roundResult, winTarget]);
+
+  /* Clear hint when turn or phase changes */
+  useEffect(() => {
+    setHint(null);
+  }, [gs?.currentPlayerIndex, gs?.phase]);
 
   /* ---- human actions ---- */
 
@@ -340,6 +352,7 @@ export default function Game() {
     if (selected === null || gs.phase !== 'discard') return;
     setGs(discardToCrib(gs, selected));
     setSelected(null);
+    setHint(null);
   };
 
   const handleCellClick = (row, col) => {
@@ -348,6 +361,7 @@ export default function Game() {
     if (gs.board[row][col] !== null) return;
     setGs(placeCard(gs, selected, row, col));
     setSelected(null);
+    setHint(null);
   };
 
   const handleNextRound = () => {
@@ -357,6 +371,14 @@ export default function Game() {
     setSelected(null);
     setGameOverInfo(null);
     setRoundNum((n) => n + 1);
+    setHint(null);
+  };
+
+  const handleHint = () => {
+    if (!gs || gs.currentPlayerIndex !== 0) return;
+    const h = getHint(gs);
+    setHint(h);
+    if (h) setSelected(h.cardIndex);
   };
 
   /* ---- render ---- */
@@ -367,8 +389,41 @@ export default function Game() {
         <h1>Criss Cross Cribbage</h1>
         <p className="intro">
           4 players · 2 teams · Your team scores <strong>columns</strong>,
-          opponents score <strong>rows</strong>. First to {WIN_TARGET} wins.
+          opponents score <strong>rows</strong>.
         </p>
+
+        <div className="setup">
+          <div className="setup-group">
+            <label className="setup-label">Difficulty</label>
+            <div className="setup-options">
+              {DIFFICULTIES.map((d) => (
+                <button
+                  key={d}
+                  className={`setup-btn ${difficulty === d ? 'setup-btn-active' : ''}`}
+                  onClick={() => setDifficulty(d)}
+                >
+                  {d.charAt(0).toUpperCase() + d.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="setup-group">
+            <label className="setup-label">Points to win</label>
+            <div className="setup-options">
+              {WIN_TARGET_OPTIONS.map((t) => (
+                <button
+                  key={t}
+                  className={`setup-btn ${winTarget === t ? 'setup-btn-active' : ''}`}
+                  onClick={() => setWinTarget(t)}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <button className="btn-pri" onClick={newGame}>New Game</button>
       </div>
     );
@@ -378,20 +433,21 @@ export default function Game() {
   const canPlace = human && gs.phase === 'place' && selected !== null;
   const inPlay = gs.phase !== 'score';
   const dealerTeam = getTeam(gs.dealerIndex);
+  const hintCell = hint && hint.row !== undefined ? { row: hint.row, col: hint.col } : null;
 
   return (
     <div className="game">
       {/* Header */}
       <div className="hdr">
         <h2>Criss Cross Cribbage</h2>
-        <ScoreTrack scores={gs.scores} />
+        <ScoreTrack scores={gs.scores} winTarget={winTarget} />
         <div className="meta">
           <span>Round {roundNum}</span>
           <span>Dealer: {PLAYER_NAMES[gs.dealerIndex]}</span>
           <span>
             Crib ({dealerTeam === 'A' ? 'yours' : 'theirs'}): {gs.crib.length}/4
           </span>
-          <span>Phase: {gs.phase}</span>
+          <span>AI: {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>
         </div>
         {gs.hisHeels && (
           <div className="heels">His Heels! Cut is a Jack — dealer&apos;s team pegs 2</div>
@@ -442,7 +498,7 @@ export default function Game() {
 
         {/* Board (center) */}
         <div className="table-center">
-          <Board board={gs.board} canPlace={canPlace} onCellClick={handleCellClick} />
+          <Board board={gs.board} canPlace={canPlace} onCellClick={handleCellClick} hintCell={hintCell} />
         </div>
 
         {/* Opponent 2 (right) */}
@@ -468,12 +524,27 @@ export default function Game() {
                 active={human}
                 onSelect={handleHandClick}
                 isDealer={gs.dealerIndex === 0}
+                hintIndex={hint ? hint.cardIndex : null}
               />
-              {human && gs.phase === 'discard' && selected !== null && (
-                <div className="discard-bar">
+              <div className="action-bar">
+                {human && gs.phase === 'discard' && selected !== null && (
                   <button className="btn-disc" onClick={handleDiscard}>
                     Discard to Crib
                   </button>
+                )}
+                {human && (
+                  <button className="btn-hint" onClick={handleHint}>
+                    💡 Hint
+                  </button>
+                )}
+              </div>
+              {hint && (
+                <div className="hint-msg">
+                  {gs.phase === 'discard'
+                    ? `Hint: discard the ${cardLabel(gs.hands[0][hint.cardIndex])}`
+                    : hint.row !== undefined
+                      ? `Hint: place ${cardLabel(gs.hands[0][hint.cardIndex])} at row ${hint.row + 1}, col ${hint.col + 1}`
+                      : `Hint: select the ${cardLabel(gs.hands[0][hint.cardIndex])}`}
                 </div>
               )}
             </>
