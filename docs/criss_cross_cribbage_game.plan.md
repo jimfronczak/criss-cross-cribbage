@@ -125,6 +125,30 @@ References: [CrossCribb rules](https://ultraboardgames.com/crosscribb/game-rules
 
 **This is a post-Phase 7 feature.** The single-player PWA should be complete before adding multiplayer.
 
+### 7. Deployment – GitHub Pages
+
+**Goal:** Host the PWA for free so friends and family can access it by URL.
+
+**Steps:**
+1. Create a public GitHub repository (e.g., `criss-cross-cribbage`).
+2. Link the local Git repo: `git remote add origin https://github.com/USERNAME/criss-cross-cribbage.git`
+3. Push all commits: `git push -u origin master`
+4. Add a GitHub Actions workflow (`.github/workflows/deploy.yml`) that runs `npm run build` on push and deploys `dist/` to GitHub Pages.
+5. Enable GitHub Pages in the repository settings (source: GitHub Actions).
+6. The app will be live at `https://USERNAME.github.io/criss-cross-cribbage/`
+
+**Cost:** Free (GitHub Pages for public repos, no backend/server).
+
+**Local testing before deployment:**
+- `npm run dev` — standard dev server (SPA only, no PWA features)
+- `npm run build && npm run preview` — production build at localhost; service worker activates, PWA install works in Chrome
+- `npm run preview --host` — same as above but accessible from other devices on local network (phone testing)
+
+**Security notes:**
+- The PWA runs in the browser sandbox with no access to other processes, files, or system resources.
+- No backend, no user data, no accounts — the attack surface is effectively zero for single-player.
+- HTTPS (automatic with GitHub Pages) prevents tampering in transit.
+
 ---
 
 ## Suggested file structure (high level)

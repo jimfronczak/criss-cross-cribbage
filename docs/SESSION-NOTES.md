@@ -11,6 +11,8 @@ Brief summary of decisions and changes from development sessions, for future ref
   - `docs/finish_phase_3_rules.plan.md` – Phase 3 checklist
   - `docs/finish_phase_4_ui.plan.md` – Phase 4 checklist
   - `docs/finish_phase_5_ai.plan.md` – Phase 5 checklist
+  - `docs/finish_phase_6_polish.plan.md` – Phase 6 checklist
+  - `docs/finish_phase_7_pwa.plan.md` – Phase 7 checklist
 - **Plans (Cursor originals):** `C:\Users\fronczak\.cursor\plans\` (Phases 1–2 only; Phase 3+ created directly in `docs/`)
 
 ## Phase 1
@@ -89,6 +91,60 @@ Brief summary of decisions and changes from development sessions, for future ref
 ## Useful references
 - Phase 6 checklist: `docs/finish_phase_6_polish.plan.md`
 
-**Phase 6 is complete.** Phase 7 (PWA & offline) has not been started.
+## Pre-Phase 7 discussion notes
 
-*Last updated: Phase 6 marked complete.*
+### PWA/SPA – What it is
+- The app is already a **Single-Page App (SPA)** — React handles all views in one `index.html` with no page navigations.
+- A **Progressive Web App (PWA)** adds installability (manifest) and offline caching (service worker) on top of the SPA.
+- After Phase 7 it will be both: an SPA that can be installed and played offline like a native app.
+
+### PWA platform support
+- **Android** (best experience): Chrome "Add to Home Screen" or install prompt. Standalone window, offline via service worker.
+- **iOS (Safari)**: Share → "Add to Home Screen". Works offline. Minor caveat: iOS may evict SW cache after weeks of inactivity — not an issue for an actively played game.
+- **Desktop (Windows/Mac/Linux)**: Chrome/Edge "Install" button — runs in its own window with taskbar/dock icon.
+
+### Security
+- The PWA runs in the **browser sandbox** — it has zero access to other apps, the file system, contacts, messages, or any other process on the device.
+- No backend server, no database, no user accounts, no personal data collected.
+- Once cached, the app makes no network requests at all.
+- The only "risk" would be someone modifying their own local copy to cheat — which affects nobody else in single-player mode.
+- HTTPS (provided by GitHub Pages / Netlify / Vercel) prevents tampering in transit.
+- If multiplayer is added later, the server would become the authority on game state to prevent cheating.
+
+### Deployment to GitHub Pages (planned)
+1. Create a new repository on GitHub (e.g., `criss-cross-cribbage`) — don't initialize with README/.gitignore.
+2. Link the local repo: `git remote add origin https://github.com/USERNAME/criss-cross-cribbage.git`
+3. Push: `git push -u origin master`
+4. Enable GitHub Pages with a GitHub Action that runs `npm run build` on push and deploys `dist/`.
+5. App will be available at: `https://USERNAME.github.io/criss-cross-cribbage/`
+6. Friends/family visit the URL → install as PWA → play offline.
+7. **Cost: free** (GitHub Pages is free for public repos; static site, no hosting costs).
+
+### Local testing (before GitHub deployment)
+- **`npm run dev`** — dev server at `localhost:5173`; tests all game functionality (SPA), but service worker / PWA install won't fully work.
+- **`npm run build` then `npm run preview`** — production build at `localhost:4173`; service worker activates, Chrome allows PWA install on localhost. Best for local PWA testing.
+- **`npm run preview --host`** — exposes on local network IP so you can test on your phone (same Wi-Fi). PWA install won't work (no HTTPS) but gameplay and layout are testable.
+- **ngrok (optional)** — creates a temporary HTTPS tunnel to localhost for full PWA install testing on mobile devices.
+
+**Phase 6 is complete.**
+
+## Phase 7 – PWA & offline ✅ complete
+- **`vite-plugin-pwa`** (Workbox) added as dev dependency; configured in `vite.config.js` with `registerType: 'autoUpdate'`.
+- **Web app manifest** generated at build time (`manifest.webmanifest`): `name`, `short_name`, `display: standalone`, `orientation: portrait`, theme/background colors.
+- **App icons**:
+  - Source: `public/icon.svg` (card-table themed: green felt, grid, sample cards, "CC" monogram).
+  - PNGs generated via `scripts/generate-icons.mjs` (uses `sharp`):
+    - `public/icon-192.png` (192×192)
+    - `public/icon-512.png` (512×512)
+    - `public/apple-touch-icon.png` (180×180)
+- **Service worker**: Workbox `generateSW` strategy. Precaches all app assets (JS, CSS, HTML, SVG, PNG). 15 entries (~276 KB).
+- **`src/main.jsx`**: registers service worker via `virtual:pwa-register` dynamic import.
+- **`index.html`**: updated favicon to `icon.svg`, added `apple-touch-icon`, `apple-mobile-web-app-status-bar-style`, and `meta description`.
+- **Offline verified**: `npm run build` produces `sw.js`, `workbox-*.js`, `manifest.webmanifest`, icons, and all precached assets.
+
+## Useful references
+- Phase 7 checklist: `docs/finish_phase_7_pwa.plan.md`
+
+**All 7 phases are complete.** The game is a fully functional PWA that can be installed on desktop, Android, and iOS and plays entirely offline after the first visit.
+
+*Last updated: Phase 7 (PWA & offline) completed.*
