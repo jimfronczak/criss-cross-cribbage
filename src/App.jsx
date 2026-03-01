@@ -189,7 +189,7 @@ export default function App() {
           Tests
         </button>
       </nav>
-      {view === 'game' && <Game />}
+      <div style={{ display: view === 'game' ? 'block' : 'none' }}><Game /></div>
       {view === 'rules' && <Rules />}
       {view === 'tests' && <TestDashboard />}
     </>

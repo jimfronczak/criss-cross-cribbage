@@ -309,6 +309,15 @@ export default function Game() {
     setHint(null);
   }, []);
 
+  const backToSetup = useCallback(() => {
+    setGs(null);
+    setSelected(null);
+    setRoundResult(null);
+    setGameOverInfo(null);
+    setRoundNum(0);
+    setHint(null);
+  }, []);
+
   /* AI auto-play */
   useEffect(() => {
     if (!gs || gs.phase === 'score' || gs.currentPlayerIndex === 0) return;
@@ -560,13 +569,13 @@ export default function Game() {
           cutCard={gs.cutCard}
           gameOver={gameOverInfo}
           onNextRound={handleNextRound}
-          onNewGame={newGame}
+          onNewGame={backToSetup}
         />
       )}
 
       {/* Footer */}
       <div className="foot">
-        <button className="btn-sec" onClick={newGame}>Restart</button>
+        <button className="btn-sec" onClick={backToSetup}>Restart</button>
       </div>
     </div>
   );
