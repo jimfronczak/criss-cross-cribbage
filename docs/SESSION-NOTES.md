@@ -168,8 +168,18 @@ Brief summary of decisions and changes from development sessions, for future ref
 - **`src/App.jsx`**: new `Rules` component with game overview, round flow, scoring reference table, teams/board explanation, and tips for new players. Added as a "Rules" tab between Game and Tests in the top nav.
 - **`src/App.css`**: rules page styles (section headers, scoring table, responsive layout).
 
+### No-Crib variant
+- **`src/game/rules.js`**: `dealRound(dealerIndex, scores, variant)` now accepts `'classic'` (default, 7 cards + discard) or `'noCrib'` (6 cards, straight to place phase); `scoreRound` skips the crib when `state.variant === 'noCrib'`; `startNewRound` carries the variant across rounds. Exports `VARIANTS` and `DEFAULT_VARIANT`.
+- **`src/game/rules.test.js`**: no-crib test block (deal shape, His Heels still fires, full-round simulation, crib-less scoring, variant preservation across rounds).
+- **`src/ai/strategy.js`**: comment on `getAIDiscard` noting it is unused in the no-crib variant (no logic change; placement and hint AI are identical).
+- **`src/Game.jsx`**: start screen has a new **Game Mode** selector with two-line buttons (`Classic / 7 cards, with crib` and `No-Crib / 6 cards, no crib`); the selected mode is passed through `dealRound` and `startNewRound` as the internal `variant` field. Header shows either the `Crib (yours/theirs): N/4` count (classic) or a `No-Crib` tag. `RoundResultPanel` hides the crib reveal and crib total line in no-crib mode.
+- **`src/Game.css`**: `.setup-btn-variant`, `.setup-btn-title`, `.setup-btn-sub` for the two-line button layout.
+- **`src/App.jsx`**: new **Game Modes** section in the Rules tab (side-by-side cards for Classic and No-Crib) and a shared-features note; existing Round Flow and Teams/Board sections annotated to flag the Classic-only bits.
+- **`src/App.css`**: `.rules-variants`, `.rules-variant-card`, `.rules-variant-tag`, `.rules-variant-blurb` styles.
+- Dealer still rotates, His Heels still fires on Jack cut, and all cribbage hand scoring applies in both variants.
+
 ## Deployment status
 - **GitHub Pages rollout complete.** Repository is on GitHub, `deploy.yml` workflow builds and publishes on push, and the live site has been verified: external users have loaded the URL, installed the PWA, and played offline successfully.
 - **Live URL:** https://jimfronczak.github.io/criss-cross-cribbage/
 
-*Last updated: GitHub Pages rollout verified in production.*
+*Last updated: Added No-Crib variant (6-card, no crib, no discard phase) selectable on the start screen; Classic remains the default.*

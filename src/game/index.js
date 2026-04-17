@@ -25,4 +25,6 @@ export {
   TEAM_A_PLAYERS,
   TEAM_B_PLAYERS,
   DEFAULT_WIN_TARGET,
+  VARIANTS,
+  DEFAULT_VARIANT,
 } from './rules.js';

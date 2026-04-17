@@ -11,6 +11,7 @@ Install as a PWA from the browser and it runs offline on desktop, Android, and i
 - 4-player CrossCribb on a 5×5 grid (your team owns columns, opponents own rows)
 - Full cribbage hand scoring: 15s, pairs, runs, flushes, His Heels, His Nobs
 - Heuristic AI for partner and opponents
+- **Game Mode**: Classic (7 cards + crib) or No-Crib (6 cards, no discard phase)
 - **Difficulty**: Easy / Medium / Hard
 - **Configurable win target**: 15, 21, 31, or 61
 - **Hint** button highlights the best card (and cell, in the place phase) for the human player

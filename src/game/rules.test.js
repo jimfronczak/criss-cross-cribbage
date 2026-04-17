@@ -146,6 +146,7 @@ export function runRulesTests() {
   results.push(assert(nr.dealerIndex === 1, 'NewRound: dealer rotated 0→1'));
   results.push(assert(nr.scores[0] === 10 && nr.scores[1] === 8, 'NewRound: scores carried'));
   results.push(assert(nr.phase === 'discard', 'NewRound: back to discard phase'));
+  results.push(assert(nr.variant === 'classic', 'NewRound: variant defaults to classic'));
 
   // ---- Full round (deal → discard → place → score → check) ----
   let full = dealRound(2); // dealer=2, first=3
@@ -159,6 +160,94 @@ export function runRulesTests() {
   results.push(assert(
     typeof go.over === 'boolean',
     `Full round: completed (scores ${fullSr.newScores.join('-')}, over=${go.over})`,
+  ));
+
+  /* ------------------------------------------------------------------ */
+  /*  No-Crib variant                                                   */
+  /* ------------------------------------------------------------------ */
+
+  // ---- dealRound (noCrib) ----
+  const ncState = dealRound(0, [0, 0], 'noCrib');
+
+  results.push(assert(
+    ncState.hands.length === 4 && ncState.hands.every((h) => h.length === 6),
+    'No-Crib deal: 4 hands of 6 cards',
+  ));
+  results.push(assert(ncState.crib.length === 0, 'No-Crib deal: crib empty'));
+  results.push(assert(ncState.phase === 'place', 'No-Crib deal: starts in place phase'));
+  results.push(assert(ncState.variant === 'noCrib', 'No-Crib deal: variant tagged'));
+  results.push(assert(ncState.dealerIndex === 0, 'No-Crib deal: dealer is 0'));
+  results.push(assert(
+    ncState.currentPlayerIndex === 1,
+    'No-Crib deal: first player is left of dealer',
+  ));
+  results.push(assert(ncState.board[2][2] !== null, 'No-Crib deal: cut card at center (2,2)'));
+
+  // 24 dealt + 1 cut = 25 unique cards
+  const ncAllDealt = [...ncState.hands.flat(), ncState.cutCard];
+  const ncUnique = new Set(ncAllDealt.map((c) => `${c.rank}${c.suit}`));
+  results.push(assert(ncUnique.size === 25, 'No-Crib deal: 25 unique cards (24 dealt + cut)'));
+
+  // ---- His Heels still fires in noCrib ----
+  let ncHeelsChecked = false;
+  for (let d = 0; d < 200; d++) {
+    const s = dealRound(d % 4, [0, 0], 'noCrib');
+    if (s.cutCard.rank === 11) {
+      const team = getTeam(s.dealerIndex);
+      const idx = team === 'A' ? 0 : 1;
+      results.push(assert(
+        s.hisHeels === true && s.scores[idx] === 2,
+        'No-Crib His Heels: cut=J → +2 to dealer team',
+      ));
+      ncHeelsChecked = true;
+      break;
+    }
+  }
+  if (!ncHeelsChecked) {
+    results.push(assert(true, 'No-Crib His Heels: no Jack cut in 200 deals (skip)'));
+  }
+
+  // ---- Full no-crib round: straight into place, no discard ----
+  let ncPs = ncState;
+  let ncPlacementCount = 0;
+  while (ncPs.phase === 'place') {
+    const cell = getLegalPlacements(ncPs)[0];
+    ncPs = placeCard(ncPs, 0, cell.row, cell.col);
+    ncPlacementCount++;
+  }
+  results.push(assert(ncPlacementCount === 24, 'No-Crib place: 24 cards placed'));
+  results.push(assert(ncPs.phase === 'score', 'No-Crib place: phase becomes score when full'));
+  results.push(assert(
+    ncPs.hands.every((h) => h.length === 0),
+    'No-Crib place: all hands empty',
+  ));
+  results.push(assert(
+    ncPs.crib.length === 0,
+    'No-Crib place: crib still empty after full round',
+  ));
+
+  // ---- scoreRound (noCrib) ignores the crib ----
+  const ncSr = scoreRound(ncPs);
+  const ncColSum = ncSr.columnScores.reduce((s, v) => s + v, 0);
+  const ncRowSum = ncSr.rowScores.reduce((s, v) => s + v, 0);
+
+  results.push(assert(ncSr.cribScore === 0, 'No-Crib score: cribScore is 0'));
+  results.push(assert(
+    ncSr.teamATotal === ncColSum,
+    'No-Crib score: Team A total = sum of columns only',
+  ));
+  results.push(assert(
+    ncSr.teamBTotal === ncRowSum,
+    'No-Crib score: Team B total = sum of rows only',
+  ));
+
+  // ---- startNewRound preserves noCrib variant ----
+  const ncNr = startNewRound(0, [5, 7], 'noCrib');
+  results.push(assert(ncNr.variant === 'noCrib', 'No-Crib NewRound: variant preserved'));
+  results.push(assert(ncNr.phase === 'place', 'No-Crib NewRound: goes straight to place'));
+  results.push(assert(
+    ncNr.hands.every((h) => h.length === 6),
+    'No-Crib NewRound: hands have 6 cards',
   ));
 
   // Summary

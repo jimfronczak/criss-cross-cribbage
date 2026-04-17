@@ -5,10 +5,21 @@
  * Teams: Player 0 (you) & 2 (AI partner) = Team A → score columns
  *        Player 1 & 3 (AI opponents)     = Team B → score rows
  *
- * Round flow:
+ * Variants:
+ *   'classic' – 7 cards dealt to each player; each discards 1 to the crib;
+ *               dealer's team scores the crib at round end.
+ *   'noCrib'  – 6 cards dealt to each player; no discard phase, no crib;
+ *               only columns (Team A) and rows (Team B) are scored.
+ *
+ * Round flow (classic):
  *   dealRound → 'discard' phase (each player discards 1 to crib)
  *             → 'place' phase  (each player places 6 cards on board)
  *             → 'score' phase  (columns, rows, crib scored; peg difference)
+ *             → startNewRound or gameOver
+ *
+ * Round flow (noCrib):
+ *   dealRound → 'place' phase  (each player places 6 cards on board)
+ *             → 'score' phase  (columns, rows scored; peg difference)
  *             → startNewRound or gameOver
  */
 
@@ -22,6 +33,8 @@ import { scoreHand } from './score.js';
 export const TEAM_A_PLAYERS = [0, 2];
 export const TEAM_B_PLAYERS = [1, 3];
 export const DEFAULT_WIN_TARGET = 31;
+export const VARIANTS = ['classic', 'noCrib'];
+export const DEFAULT_VARIANT = 'classic';
 
 export function getTeam(playerIndex) {
   return TEAM_A_PLAYERS.includes(playerIndex) ? 'A' : 'B';
@@ -38,26 +51,33 @@ function teamScoreIdx(team) {
 
 /**
  * Deal a new round.
- *  - Shuffles deck, deals 7 cards to each of 4 players (28 cards).
- *  - Next card is the cut card, placed at center (2,2).
- *  - His Heels: if cut is a Jack, dealer's team pegs 2 immediately.
- *  - Phase starts as 'discard'; first player is left of dealer.
+ *  - Shuffles deck.
+ *  - Classic: deals 7 cards × 4 players (28 cards); cut card is deck[28].
+ *    Phase starts as 'discard'.
+ *  - No-Crib: deals 6 cards × 4 players (24 cards); cut card is deck[24].
+ *    Phase starts as 'place' (no discard phase).
+ *  - Cut card is placed at center (2,2).
+ *  - His Heels: if cut is a Jack, dealer's team pegs 2 immediately (both variants).
+ *  - First player is left of dealer.
  *
  * @param {number} dealerIndex 0–3
  * @param {[number,number]} scores carried-over team scores
- * @returns {import('./state.js').GameState & { hisHeels: boolean }}
+ * @param {'classic'|'noCrib'} [variant] defaults to 'classic'
+ * @returns {import('./state.js').GameState & { hisHeels: boolean, variant: 'classic'|'noCrib' }}
  */
-export function dealRound(dealerIndex, scores = [0, 0]) {
+export function dealRound(dealerIndex, scores = [0, 0], variant = DEFAULT_VARIANT) {
   const deck = shuffle(createDeck());
+  const cardsPerHand = variant === 'noCrib' ? 6 : 7;
+  const cutCardIndex = cardsPerHand * 4;
 
   const hands = [
-    deck.slice(0, 7),
-    deck.slice(7, 14),
-    deck.slice(14, 21),
-    deck.slice(21, 28),
+    deck.slice(0, cardsPerHand),
+    deck.slice(cardsPerHand, cardsPerHand * 2),
+    deck.slice(cardsPerHand * 2, cardsPerHand * 3),
+    deck.slice(cardsPerHand * 3, cardsPerHand * 4),
   ];
 
-  const cutCard = deck[28];
+  const cutCard = deck[cutCardIndex];
 
   const board = createEmptyBoard();
   board[2][2] = cutCard;
@@ -78,8 +98,9 @@ export function dealRound(dealerIndex, scores = [0, 0]) {
     dealerIndex,
     currentPlayerIndex: (dealerIndex + 1) % 4,
     scores: newScores,
-    phase: 'discard',
+    phase: variant === 'noCrib' ? 'place' : 'discard',
     hisHeels,
+    variant,
   };
 }
 
@@ -216,7 +237,8 @@ export function placeCard(state, cardIndex, row, col) {
  * Score a completed round.
  *  - 5 column hands → Team A
  *  - 5 row hands    → Team B
- *  - Crib (4 discards + cut) → dealer's team
+ *  - Classic only: crib (4 discards + cut) → dealer's team
+ *    (in noCrib mode the crib is always empty and cribScore is 0)
  *  - Winning team pegs the difference.
  *
  * @param {import('./state.js').GameState} state  (must be in 'score' phase)
@@ -233,7 +255,8 @@ export function placeCard(state, cardIndex, row, col) {
  * }}
  */
 export function scoreRound(state) {
-  const { board, cutCard, crib, dealerIndex, scores } = state;
+  const { board, cutCard, crib, dealerIndex, scores, variant } = state;
+  const isClassic = variant !== 'noCrib';
 
   const columnScores = [];
   for (let col = 0; col < 5; col++) {
@@ -252,16 +275,17 @@ export function scoreRound(state) {
     rowScores.push(scoreHand([...board[row]], false, cutCard));
   }
 
-  const cribHand = [...crib, cutCard];
-  const cribScore = scoreHand(cribHand, true, cutCard);
+  const cribScore = isClassic
+    ? scoreHand([...crib, cutCard], true, cutCard)
+    : 0;
 
   const dealerTeam = getTeam(dealerIndex);
   const teamATotal =
     columnScores.reduce((s, v) => s + v, 0) +
-    (dealerTeam === 'A' ? cribScore : 0);
+    (isClassic && dealerTeam === 'A' ? cribScore : 0);
   const teamBTotal =
     rowScores.reduce((s, v) => s + v, 0) +
-    (dealerTeam === 'B' ? cribScore : 0);
+    (isClassic && dealerTeam === 'B' ? cribScore : 0);
 
   const diff = Math.abs(teamATotal - teamBTotal);
   let pegTeam = null;
@@ -297,13 +321,14 @@ export function scoreRound(state) {
 /* ------------------------------------------------------------------ */
 
 /**
- * Start a new round (rotate dealer, keep scores).
+ * Start a new round (rotate dealer, keep scores, preserve variant).
  * @param {number} currentDealerIndex
  * @param {[number,number]} scores
- * @returns {import('./state.js').GameState & { hisHeels: boolean }}
+ * @param {'classic'|'noCrib'} [variant] defaults to 'classic'
+ * @returns {import('./state.js').GameState & { hisHeels: boolean, variant: 'classic'|'noCrib' }}
  */
-export function startNewRound(currentDealerIndex, scores) {
-  return dealRound((currentDealerIndex + 1) % 4, scores);
+export function startNewRound(currentDealerIndex, scores, variant = DEFAULT_VARIANT) {
+  return dealRound((currentDealerIndex + 1) % 4, scores, variant);
 }
 
 /**

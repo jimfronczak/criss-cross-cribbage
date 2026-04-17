@@ -430,6 +430,30 @@
   font-weight: 700;
 }
 
+/* Two-line variant buttons: big primary label + smaller subtitle. */
+.setup-btn-variant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 10px;
+  line-height: 1.15;
+  flex: 1;
+  min-width: 0;
+}
+.setup-btn-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.setup-btn-sub {
+  font-size: 0.7rem;
+  color: #888;
+  font-weight: 500;
+}
+.setup-btn-variant.setup-btn-active .setup-btn-sub {
+  color: #4fc3f7;
+}
+
 /* ---- action bar (discard + hint) ---- */
 .action-bar {
   display: flex;

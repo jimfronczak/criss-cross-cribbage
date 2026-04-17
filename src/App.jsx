@@ -27,16 +27,53 @@ function Rules() {
       </section>
 
       <section className="rules-section">
+        <h3>Game Modes</h3>
+        <p>
+          Pick a game mode on the start screen before each new game.
+        </p>
+        <div className="rules-variants">
+          <div className="rules-variant-card">
+            <h4>Classic <span className="rules-variant-tag">default</span></h4>
+            <p className="rules-variant-blurb">
+              Standard CrossCribb with a crib.
+            </p>
+            <ul>
+              <li>7 cards dealt to each player.</li>
+              <li>Every player discards 1 card to the dealer&apos;s crib.</li>
+              <li>Dealer&apos;s team scores the crib (4 discards + cut card) on top of their columns or rows.</li>
+            </ul>
+          </div>
+          <div className="rules-variant-card">
+            <h4>No-Crib</h4>
+            <p className="rules-variant-blurb">
+              Shorter, simpler game with less bookkeeping.
+            </p>
+            <ul>
+              <li>6 cards dealt to each player.</li>
+              <li>No discard phase, no crib.</li>
+              <li>Teams score only their columns (your team) or rows (opponents).</li>
+            </ul>
+          </div>
+        </div>
+        <p className="rules-note">
+          Both game modes keep the cut card, His Heels (Jack cut = 2 points for the
+          dealer&apos;s team), all standard cribbage hand scoring, dealer rotation,
+          and the win target you pick on the start screen.
+        </p>
+      </section>
+
+      <section className="rules-section">
         <h3>Round Flow</h3>
         <ol>
           <li>
-            <strong>Deal</strong> &mdash; Each player receives 7 cards. One card
-            is placed face-up in the center of the board as the <em>cut card</em>.
+            <strong>Deal</strong> &mdash; Each player receives 7 cards in Classic
+            or 6 cards in No-Crib. One card is placed face-up in the center of the
+            board as the <em>cut card</em>.
           </li>
           <li>
-            <strong>Discard</strong> &mdash; Each player discards 1 card to the{' '}
-            <em>crib</em> (4 cards total). The crib is scored at the end of the
-            round and belongs to the dealer&apos;s team.
+            <strong>Discard</strong> <em>(Classic only)</em> &mdash; Each player
+            discards 1 card to the <em>crib</em> (4 cards total). The crib is
+            scored at the end of the round and belongs to the dealer&apos;s team.
           </li>
           <li>
             <strong>Place</strong> &mdash; Players take turns placing one card
@@ -45,9 +82,10 @@ function Rules() {
           </li>
           <li>
             <strong>Score</strong> &mdash; Once the board is full, each column
-            (5 cards) is scored for your team, each row (5 cards) is scored for the
-            opponents, and the crib is scored for the dealer&apos;s team. The team
-            with the higher total pegs the <em>difference</em>.
+            (5 cards) is scored for your team and each row (5 cards) is scored
+            for the opponents. In Classic, the crib is also scored for the
+            dealer&apos;s team. The team with the higher total pegs the{' '}
+            <em>difference</em>.
           </li>
           <li>
             <strong>Next round</strong> &mdash; The dealer rotates clockwise and a
@@ -89,7 +127,7 @@ function Rules() {
           <li><strong>Team A</strong> (You + Partner): scores the 5 <em>columns</em></li>
           <li><strong>Team B</strong> (Opponent 1 + Opponent 2): scores the 5 <em>rows</em></li>
           <li>The center cell (row 3, col 3) is always the <em>cut card</em> &mdash; it counts for both columns and rows</li>
-          <li>The crib (4 discarded cards + cut card) is scored for whichever team has the dealer</li>
+          <li>In Classic, the crib (4 discarded cards + cut card) is scored for whichever team has the dealer; No-Crib skips this</li>
         </ul>
       </section>
 
@@ -98,7 +136,8 @@ function Rules() {
         <ul>
           <li>Use the <strong>Hint</strong> button to see the AI&apos;s recommended move</li>
           <li>Try to build 15s and runs in your columns while disrupting opponent rows</li>
-          <li>When discarding to crib: if it&apos;s your team&apos;s crib, give it good cards; if not, give it junk</li>
+          <li>When discarding to crib (Classic): if it&apos;s your team&apos;s crib, give it good cards; if not, give it junk</li>
+          <li>Try No-Crib for a shorter game if you just want to focus on the board</li>
           <li>Pay attention to the cut card &mdash; it&apos;s part of every column and every row</li>
           <li>Start on <strong>Easy</strong> difficulty to learn, then work up to Hard</li>
         </ul>

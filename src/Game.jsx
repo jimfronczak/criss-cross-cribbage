@@ -8,6 +8,7 @@ import {
   checkGameOver,
   getTeam,
   DEFAULT_WIN_TARGET,
+  DEFAULT_VARIANT,
 } from './game/index.js';
 import { getAIPlacement, getAIDiscard, getHint, DIFFICULTIES } from './ai/strategy.js';
 import './Game.css';
@@ -16,6 +17,11 @@ const PLAYER_NAMES = ['You', 'Opponent 1', 'Partner', 'Opponent 2'];
 const SUIT_SYMBOL = { H: '♥', D: '♦', C: '♣', S: '♠' };
 const RANK_LABEL = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' };
 const WIN_TARGET_OPTIONS = [15, 21, 31, 61];
+
+const VARIANT_OPTIONS = [
+  { id: 'classic', title: 'Classic', subtitle: '7 cards, with crib' },
+  { id: 'noCrib',  title: 'No-Crib', subtitle: '6 cards, no crib' },
+];
 
 const CARD_BACKS = [
   { bg: 'repeating-linear-gradient(45deg,#1a237e,#1a237e 3px,#283593 3px,#283593 6px)', border: '#3949ab' },
@@ -225,25 +231,27 @@ function PlayerHand({ hand, selected, active, onSelect, isDealer, hintIndex }) {
 /*  Round result                                                       */
 /* ------------------------------------------------------------------ */
 
-function RoundResultPanel({ result, crib, cutCard, gameOver, onNextRound, onNewGame }) {
+function RoundResultPanel({ result, crib, cutCard, variant, gameOver, onNextRound, onNewGame }) {
+  const showCrib = variant !== 'noCrib';
   return (
     <div className="rr">
       <h3>Round Scores</h3>
 
-      {/* Crib reveal */}
-      <div className="rr-crib">
-        <span className="rr-crib-label">
-          Crib ({result.dealerTeam === 'A' ? 'Your team' : 'Opponents'}):
-        </span>
-        <span className="rr-crib-cards">
-          {crib.map((c, i) => (
-            <CardFace key={i} card={c} className="rr-card" />
-          ))}
-          <span className="rr-crib-plus">+</span>
-          <CardFace card={cutCard} className="rr-card rr-card-cut" />
-        </span>
-        <span className="rr-crib-score">= {result.cribScore} pts</span>
-      </div>
+      {showCrib && (
+        <div className="rr-crib">
+          <span className="rr-crib-label">
+            Crib ({result.dealerTeam === 'A' ? 'Your team' : 'Opponents'}):
+          </span>
+          <span className="rr-crib-cards">
+            {crib.map((c, i) => (
+              <CardFace key={i} card={c} className="rr-card" />
+            ))}
+            <span className="rr-crib-plus">+</span>
+            <CardFace card={cutCard} className="rr-card rr-card-cut" />
+          </span>
+          <span className="rr-crib-score">= {result.cribScore} pts</span>
+        </div>
+      )}
 
       <div className="rr-cols">
         <div className="rr-team">
@@ -251,7 +259,7 @@ function RoundResultPanel({ result, crib, cutCard, gameOver, onNextRound, onNewG
           {result.columnScores.map((s, i) => (
             <div key={i}>Col {i + 1}: {s} pts</div>
           ))}
-          {result.dealerTeam === 'A' && <div>Crib: {result.cribScore} pts</div>}
+          {showCrib && result.dealerTeam === 'A' && <div>Crib: {result.cribScore} pts</div>}
           <div className="rr-total">Total: {result.teamATotal}</div>
         </div>
         <div className="rr-team">
@@ -259,7 +267,7 @@ function RoundResultPanel({ result, crib, cutCard, gameOver, onNextRound, onNewG
           {result.rowScores.map((s, i) => (
             <div key={i}>Row {i + 1}: {s} pts</div>
           ))}
-          {result.dealerTeam === 'B' && <div>Crib: {result.cribScore} pts</div>}
+          {showCrib && result.dealerTeam === 'B' && <div>Crib: {result.cribScore} pts</div>}
           <div className="rr-total">Total: {result.teamBTotal}</div>
         </div>
       </div>
@@ -297,17 +305,18 @@ export default function Game() {
   const [roundNum, setRoundNum] = useState(0);
   const [difficulty, setDifficulty] = useState('medium');
   const [winTarget, setWinTarget] = useState(DEFAULT_WIN_TARGET);
+  const [variant, setVariant] = useState(DEFAULT_VARIANT);
   const [hint, setHint] = useState(null);
 
   const newGame = useCallback(() => {
-    setGs(dealRound(0));
+    setGs(dealRound(0, [0, 0], variant));
     setSelected(null);
     setRoundResult(null);
     setGameOverInfo(null);
     setCardBack(CARD_BACKS[Math.floor(Math.random() * CARD_BACKS.length)]);
     setRoundNum(1);
     setHint(null);
-  }, []);
+  }, [variant]);
 
   const backToSetup = useCallback(() => {
     setGs(null);
@@ -375,7 +384,7 @@ export default function Game() {
 
   const handleNextRound = () => {
     if (!roundResult) return;
-    setGs(startNewRound(gs.dealerIndex, roundResult.newScores));
+    setGs(startNewRound(gs.dealerIndex, roundResult.newScores, gs.variant));
     setRoundResult(null);
     setSelected(null);
     setGameOverInfo(null);
@@ -402,6 +411,22 @@ export default function Game() {
         </p>
 
         <div className="setup">
+          <div className="setup-group">
+            <label className="setup-label">Game Mode</label>
+            <div className="setup-options">
+              {VARIANT_OPTIONS.map((v) => (
+                <button
+                  key={v.id}
+                  className={`setup-btn setup-btn-variant ${variant === v.id ? 'setup-btn-active' : ''}`}
+                  onClick={() => setVariant(v.id)}
+                >
+                  <span className="setup-btn-title">{v.title}</span>
+                  <span className="setup-btn-sub">{v.subtitle}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="setup-group">
             <label className="setup-label">Difficulty</label>
             <div className="setup-options">
@@ -453,9 +478,12 @@ export default function Game() {
         <div className="meta">
           <span>Round {roundNum}</span>
           <span>Dealer: {PLAYER_NAMES[gs.dealerIndex]}</span>
-          <span>
-            Crib ({dealerTeam === 'A' ? 'yours' : 'theirs'}): {gs.crib.length}/4
-          </span>
+          {gs.variant !== 'noCrib' && (
+            <span>
+              Crib ({dealerTeam === 'A' ? 'yours' : 'theirs'}): {gs.crib.length}/4
+            </span>
+          )}
+          {gs.variant === 'noCrib' && <span>No-Crib</span>}
           <span>AI: {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>
         </div>
         {gs.hisHeels && (
@@ -567,6 +595,7 @@ export default function Game() {
           result={roundResult}
           crib={gs.crib}
           cutCard={gs.cutCard}
+          variant={gs.variant}
           gameOver={gameOverInfo}
           onNextRound={handleNextRound}
           onNewGame={backToSetup}

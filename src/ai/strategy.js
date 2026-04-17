@@ -208,6 +208,11 @@ export function getAIPlacement(state, difficulty = 'hard') {
 
 /**
  * Choose the best card to discard to the crib.
+ *
+ * Note: only called in the Classic variant. In the No-Crib variant the
+ * game never enters the 'discard' phase, so this function is simply not
+ * invoked by the UI (the auto-play branch is gated on `phase === 'discard'`).
+ *
  * @param {import('../game/state.js').GameState} state
  * @param {'easy'|'medium'|'hard'} [difficulty='hard']
  * @returns {{ cardIndex: number }}
