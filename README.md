@@ -1,16 +1,46 @@
-# React + Vite
+# Criss Cross Cribbage
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A 4-player Criss Cross Cribbage (CrossCribb) card game built as a Progressive Web App. You play with one AI partner against two AI opponents on a 5×5 board. Standard cribbage hand scoring; first team to the selected win target (default 31) wins.
 
-Currently, two official plugins are available:
+**Play it:** https://jimfronczak.github.io/criss-cross-cribbage/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Install as a PWA from the browser and it runs offline on desktop, Android, and iOS.
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- 4-player CrossCribb on a 5×5 grid (your team owns columns, opponents own rows)
+- Full cribbage hand scoring: 15s, pairs, runs, flushes, His Heels, His Nobs
+- Heuristic AI for partner and opponents
+- **Difficulty**: Easy / Medium / Hard
+- **Configurable win target**: 15, 21, 31, or 61
+- **Hint** button highlights the best card (and cell, in the place phase) for the human player
+- Rules tab with a quick reference; state of the current game is preserved when switching tabs
+- PWA: installable, offline-capable, responsive layout for phones and desktop
 
-## Expanding the ESLint configuration
+## Development
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev        # dev server at localhost:5173
+npm run build      # production build into dist/
+npm run preview    # preview production build at localhost:4173 (service worker active)
+```
+
+## Deployment
+
+Pushing to `master` triggers `.github/workflows/deploy.yml`, which builds the site and publishes `dist/` to GitHub Pages at the URL above. The Vite `base` path is configured for subdirectory hosting.
+
+## Project layout
+
+- `src/game/` – pure game logic: `state.js`, `score.js`, `rules.js`, tests
+- `src/ai/` – heuristic AI (`strategy.js`) and tests
+- `src/Game.jsx`, `src/Game.css` – game UI
+- `src/App.jsx`, `src/App.css` – app shell with Game / Rules / Tests tabs
+- `docs/` – plans and session notes:
+  - `criss_cross_cribbage_game.plan.md` – main plan
+  - `finish_phase_*.plan.md` – per-phase checklists (1–7)
+  - `SESSION-NOTES.md` – running log of decisions and status
+
+## Status
+
+All 7 phases complete plus post-Phase 7 polish (difficulty levels, hints, rules tab, configurable win target). GitHub Pages deployment is live and verified. Multiplayer with real opponents is documented as a future feature.

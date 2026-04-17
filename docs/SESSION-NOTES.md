@@ -4,6 +4,7 @@ Brief summary of decisions and changes from development sessions, for future ref
 
 ## Project location
 - **App:** `C:\Users\fronczak\cursorprojects\criss-cross-cribbage`
+- **Live site:** https://jimfronczak.github.io/criss-cross-cribbage/
 - **Plans (local copies):** `docs/` folder in the project root:
   - `docs/criss_cross_cribbage_game.plan.md` – Main game plan (all phases)
   - `docs/finish_phase_1_cribbage.plan.md` – Phase 1 checklist
@@ -111,14 +112,12 @@ Brief summary of decisions and changes from development sessions, for future ref
 - HTTPS (provided by GitHub Pages / Netlify / Vercel) prevents tampering in transit.
 - If multiplayer is added later, the server would become the authority on game state to prevent cheating.
 
-### Deployment to GitHub Pages (planned)
-1. Create a new repository on GitHub (e.g., `criss-cross-cribbage`) — don't initialize with README/.gitignore.
-2. Link the local repo: `git remote add origin https://github.com/USERNAME/criss-cross-cribbage.git`
-3. Push: `git push -u origin master`
-4. Enable GitHub Pages with a GitHub Action that runs `npm run build` on push and deploys `dist/`.
-5. App will be available at: `https://USERNAME.github.io/criss-cross-cribbage/`
-6. Friends/family visit the URL → install as PWA → play offline.
-7. **Cost: free** (GitHub Pages is free for public repos; static site, no hosting costs).
+### Deployment to GitHub Pages ✅ complete
+1. Created the GitHub repository and linked the local repo as `origin`.
+2. Pushed the project; `.github/workflows/deploy.yml` builds on push and publishes `dist/`.
+3. `vite.config.js` `base` path set for subdirectory hosting (commit `fd07736`).
+4. Live URL is reachable; other people have visited it, installed the PWA, and played offline — verified working end-to-end.
+5. **Cost: free** (public repo on GitHub Pages, static site).
 
 ### Local testing (before GitHub deployment)
 - **`npm run dev`** — dev server at `localhost:5173`; tests all game functionality (SPA), but service worker / PWA install won't fully work.
@@ -169,4 +168,8 @@ Brief summary of decisions and changes from development sessions, for future ref
 - **`src/App.jsx`**: new `Rules` component with game overview, round flow, scoring reference table, teams/board explanation, and tips for new players. Added as a "Rules" tab between Game and Tests in the top nav.
 - **`src/App.css`**: rules page styles (section headers, scoring table, responsive layout).
 
-*Last updated: Post-Phase 7 additions (difficulty, hints, rules tab, configurable win target).*
+## Deployment status
+- **GitHub Pages rollout complete.** Repository is on GitHub, `deploy.yml` workflow builds and publishes on push, and the live site has been verified: external users have loaded the URL, installed the PWA, and played offline successfully.
+- **Live URL:** https://jimfronczak.github.io/criss-cross-cribbage/
+
+*Last updated: GitHub Pages rollout verified in production.*
