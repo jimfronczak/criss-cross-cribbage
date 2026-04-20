@@ -15,6 +15,7 @@ Install as a PWA from the browser and it runs offline on desktop, Android, and i
 - **Difficulty**: Easy / Medium / Hard
 - **Configurable win target**: 15, 21, 31, or 61
 - **Hint** button highlights the best card (and cell, in the place phase) for the human player
+- **Stats** tab: win/loss record per Game Mode, stored in browser localStorage (per device)
 - Rules tab with a quick reference; state of the current game is preserved when switching tabs
 - PWA: installable, offline-capable, responsive layout for phones and desktop
 
@@ -36,7 +37,8 @@ Pushing to `master` triggers `.github/workflows/deploy.yml`, which builds the si
 - `src/game/` – pure game logic: `state.js`, `score.js`, `rules.js`, tests
 - `src/ai/` – heuristic AI (`strategy.js`) and tests
 - `src/Game.jsx`, `src/Game.css` – game UI
-- `src/App.jsx`, `src/App.css` – app shell with Game / Rules / Tests tabs
+- `src/App.jsx`, `src/App.css` – app shell with Game / Rules / Stats / Tests tabs
+- `src/game/stats.js` – localStorage-backed per-mode win/loss tracking
 - `docs/` – plans and session notes:
   - `criss_cross_cribbage_game.plan.md` – main plan
   - `finish_phase_*.plan.md` – per-phase checklists (1–7)

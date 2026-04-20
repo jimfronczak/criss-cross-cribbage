@@ -134,6 +134,98 @@
   margin-bottom: 3px;
 }
 
+/* ---- stats page ---- */
+.stats {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 16px 20px 40px;
+  text-align: left;
+  line-height: 1.6;
+  color: #ccc;
+}
+.stats h2 {
+  text-align: center;
+  margin-bottom: 8px;
+  font-size: 1.4rem;
+}
+.stats-intro {
+  text-align: center;
+  margin: 0 0 20px;
+  color: #999;
+  font-size: 0.9rem;
+}
+.stats-section {
+  margin-bottom: 24px;
+}
+.stats-section h3 {
+  color: #4fc3f7;
+  font-size: 1.05rem;
+  margin: 0 0 10px;
+  border-bottom: 1px solid rgba(79, 195, 247, 0.2);
+  padding-bottom: 4px;
+}
+.stats-overall {
+  background: rgba(79, 195, 247, 0.06);
+  border: 1px solid rgba(79, 195, 247, 0.18);
+  border-radius: 10px;
+  padding: 12px 18px;
+}
+.stats-overall h3 {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 6px;
+}
+.stats-mode-record {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 2px 0 4px;
+}
+.stats-overall .stats-mode-record {
+  font-size: 1.8rem;
+}
+.stats-dash {
+  color: #777;
+  font-weight: 400;
+}
+.stats-score {
+  letter-spacing: 0.02em;
+}
+.stats-winpct {
+  margin: 0;
+  color: #bbb;
+  font-size: 0.88rem;
+}
+.stats-winpct strong {
+  color: #81c784;
+}
+.stats-games {
+  color: #888;
+}
+.stats-empty {
+  margin: 4px 0 0;
+  color: #888;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+.stats-reset {
+  margin-top: 28px;
+  text-align: center;
+}
+.stats-reset .btn-sec {
+  font-size: 0.85rem;
+}
+.stats-note {
+  margin: 10px auto 0;
+  max-width: 460px;
+  color: #777;
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
 /* ---- test dashboard (carried from Phase 2/3) ---- */
 .test-results {
   margin-top: 1rem;

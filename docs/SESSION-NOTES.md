@@ -178,8 +178,15 @@ Brief summary of decisions and changes from development sessions, for future ref
 - **`src/App.css`**: `.rules-variants`, `.rules-variant-card`, `.rules-variant-tag`, `.rules-variant-blurb` styles.
 - Dealer still rotates, His Heels still fires on Jack cut, and all cribbage hand scoring applies in both variants.
 
+### Stats tab (localStorage leaderboard)
+- **`src/game/stats.js`** (new): owns all persistence. Storage key `cricrib:v1:stats`, JSON shape `{ version: 1, byMode: { classic: { you, them }, noCrib: { you, them } } }` (`you` = Team A wins, `them` = Team B wins). Exports `loadStats`, `saveStats`, `recordGame({variant, winner})`, `resetStats`, and `getSummary(stats)` which derives `{ overall, byMode }` with win %. Safe when `window`/`localStorage` is unavailable (node tests, private browsing, quota errors) — reads fall back to empty stats, writes become no-ops.
+- **`src/Game.jsx`**: in the score-phase effect, when `checkGameOver` reports `over`, calls `recordGame({ variant: gs.variant, winner: go.winner })` alongside `setGameOverInfo`. The existing `!roundResult` guard ensures exactly one record per finished game.
+- **`src/App.jsx`**: new **Stats** tab between Rules and Tests. `Stats` component renders an Overall card (big `You X – Them Y` + win rate) plus two per-mode cards reusing the rules-variant card pattern (Classic and No-Crib, each showing `You X – Them Y`, win rate, and game count, or "No games yet" when empty). Includes a **Reset stats** button with `window.confirm` before wiping. The Stats view is conditionally rendered (mounted on nav click, unmounted when you leave), so it always reads fresh stats from localStorage via `useState(() => loadStats())` — no effect, no stale counts.
+- **`src/App.css`**: `.stats`, `.stats-intro`, `.stats-section`, `.stats-overall`, `.stats-mode-record`, `.stats-dash`, `.stats-score`, `.stats-winpct`, `.stats-games`, `.stats-empty`, `.stats-reset`, `.stats-note` styles; reuses `.rules-variants` / `.rules-variant-card` for the per-mode cards and the existing `.btn-sec` button style from `Game.css`.
+- **Scope caveat**: stats are per browser profile per device (no cross-device sync). Documented in the Stats tab itself and in the README.
+
 ## Deployment status
 - **GitHub Pages rollout complete.** Repository is on GitHub, `deploy.yml` workflow builds and publishes on push, and the live site has been verified: external users have loaded the URL, installed the PWA, and played offline successfully.
 - **Live URL:** https://jimfronczak.github.io/criss-cross-cribbage/
 
-*Last updated: Added No-Crib variant (6-card, no crib, no discard phase) selectable on the start screen; Classic remains the default.*
+*Last updated: Added Stats tab — per-Game-Mode win/loss record stored in browser localStorage, with overall totals, win rate, and a confirmed Reset button.*

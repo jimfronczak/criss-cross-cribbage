@@ -4,6 +4,7 @@ import { runScoreTests } from './game/score.test.js'
 import { runRulesTests } from './game/rules.test.js'
 import { runStrategyTests } from './ai/strategy.test.js'
 import { cardToString } from './game/state.js'
+import { loadStats, resetStats, getSummary } from './game/stats.js'
 import './App.css'
 
 /* ================================================================== */
@@ -147,6 +148,84 @@ function Rules() {
 }
 
 /* ================================================================== */
+/*  Stats page                                                         */
+/* ================================================================== */
+
+const MODE_LABELS = {
+  classic: { title: 'Classic', subtitle: '7 cards, with crib' },
+  noCrib:  { title: 'No-Crib', subtitle: '6 cards, no crib' },
+}
+
+function RecordLine({ rec }) {
+  if (rec.total === 0) {
+    return <p className="stats-empty">No games yet.</p>
+  }
+  return (
+    <>
+      <div className="stats-mode-record">
+        <span className="stats-score">You {rec.you}</span>
+        <span className="stats-dash">&ndash;</span>
+        <span className="stats-score">Them {rec.them}</span>
+      </div>
+      <p className="stats-winpct">
+        Win rate: <strong>{rec.winPct}%</strong>
+        <span className="stats-games"> ({rec.total} game{rec.total === 1 ? '' : 's'})</span>
+      </p>
+    </>
+  )
+}
+
+function Stats() {
+  const [stats, setStats] = useState(() => loadStats())
+  const summary = getSummary(stats)
+
+  const handleReset = () => {
+    const ok = typeof window !== 'undefined'
+      ? window.confirm('Reset all stats? This cannot be undone.')
+      : false
+    if (!ok) return
+    setStats(resetStats())
+  }
+
+  return (
+    <div className="stats">
+      <h2>Stats</h2>
+      <p className="stats-intro">
+        Your win/loss record against the AI, by Game Mode.
+      </p>
+
+      <section className="stats-section stats-overall">
+        <h3>Overall</h3>
+        <RecordLine rec={summary.overall} />
+      </section>
+
+      <section className="stats-section">
+        <h3>By Game Mode</h3>
+        <div className="rules-variants">
+          {['classic', 'noCrib'].map((mode) => (
+            <div key={mode} className="rules-variant-card">
+              <h4>
+                {MODE_LABELS[mode].title}
+                <span className="rules-variant-tag">{MODE_LABELS[mode].subtitle}</span>
+              </h4>
+              <RecordLine rec={summary.byMode[mode]} />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="stats-reset">
+        <button className="btn-sec" onClick={handleReset}>Reset stats</button>
+        <p className="stats-note">
+          Stats are stored in this browser on this device only. Clearing site
+          data or using a different browser / device will show a separate record.
+        </p>
+      </section>
+    </div>
+  )
+}
+
+/* ================================================================== */
 /*  Test dashboard                                                     */
 /* ================================================================== */
 
@@ -222,6 +301,12 @@ export default function App() {
           Rules
         </button>
         <button
+          className={view === 'stats' ? 'nav-active' : ''}
+          onClick={() => setView('stats')}
+        >
+          Stats
+        </button>
+        <button
           className={view === 'tests' ? 'nav-active' : ''}
           onClick={() => setView('tests')}
         >
@@ -230,6 +315,7 @@ export default function App() {
       </nav>
       <div style={{ display: view === 'game' ? 'block' : 'none' }}><Game /></div>
       {view === 'rules' && <Rules />}
+      {view === 'stats' && <Stats />}
       {view === 'tests' && <TestDashboard />}
     </>
   )

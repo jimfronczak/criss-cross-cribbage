@@ -11,6 +11,7 @@ import {
   DEFAULT_VARIANT,
 } from './game/index.js';
 import { getAIPlacement, getAIDiscard, getHint, DIFFICULTIES } from './ai/strategy.js';
+import { recordGame } from './game/stats.js';
 import './Game.css';
 
 const PLAYER_NAMES = ['You', 'Opponent 1', 'Partner', 'Opponent 2'];
@@ -350,7 +351,10 @@ export default function Game() {
       const r = scoreRound(gs);
       setRoundResult(r);
       const go = checkGameOver(r.newScores, winTarget);
-      if (go.over) setGameOverInfo(go);
+      if (go.over) {
+        setGameOverInfo(go);
+        recordGame({ variant: gs.variant, winner: go.winner });
+      }
     }
   }, [gs?.phase, roundResult, winTarget]);
 
