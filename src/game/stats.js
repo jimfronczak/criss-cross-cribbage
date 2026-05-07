@@ -1,37 +1,48 @@
 /**
- * Per-Game-Mode win/loss stats, persisted to browser localStorage.
+ * Per-Game-Mode x Difficulty win/loss stats, persisted to browser localStorage.
  *
  * Storage shape (key = STATS_KEY):
  *   {
- *     version: 1,
- *     byMode: {
- *       classic: { you: N, them: N },
- *       noCrib:  { you: N, them: N }
+ *     version: 2,
+ *     byModeDifficulty: {
+ *       classic: { easy: {you,them}, medium: {you,them}, hard: {you,them} },
+ *       noCrib:  { easy: {you,them}, medium: {you,them}, hard: {you,them} }
  *     }
  *   }
  *
  * "you"  = finished games where Team A (the human) won.
  * "them" = finished games where Team B (the AI opponents) won.
  *
+ * Anything stored under an older `version` is treated as empty on load,
+ * which gives a one-time clean wipe whenever the schema bumps.
+ *
  * All functions are defensive: if localStorage is unavailable (SSR, private
- * mode, quota errors) or contains corrupt data, reads fall back to
- * EMPTY_STATS and writes become no-ops. This keeps node-based engine tests
- * happy and the app functional even when persistence is blocked.
+ * mode, quota errors) or contains corrupt data, reads fall back to empty
+ * stats and writes become no-ops. This keeps node-based engine tests happy
+ * and the app functional even when persistence is blocked.
  */
 
 import { VARIANTS, DEFAULT_VARIANT } from './rules.js';
+import { DIFFICULTIES } from '../ai/strategy.js';
 
 export const STATS_KEY = 'cricrib:v1:stats';
-export const STATS_VERSION = 1;
+export const STATS_VERSION = 2;
+export const DEFAULT_DIFFICULTY = 'medium';
 
-function emptyModeRecord() {
+function emptyRecord() {
   return { you: 0, them: 0 };
 }
 
+function emptyDifficultyMap() {
+  const m = {};
+  for (const d of DIFFICULTIES) m[d] = emptyRecord();
+  return m;
+}
+
 export function createEmptyStats() {
-  const byMode = {};
-  for (const v of VARIANTS) byMode[v] = emptyModeRecord();
-  return { version: STATS_VERSION, byMode };
+  const byModeDifficulty = {};
+  for (const v of VARIANTS) byModeDifficulty[v] = emptyDifficultyMap();
+  return { version: STATS_VERSION, byModeDifficulty };
 }
 
 export const EMPTY_STATS = createEmptyStats();
@@ -45,8 +56,8 @@ function getStorage() {
   }
 }
 
-function sanitizeModeRecord(raw) {
-  const rec = emptyModeRecord();
+function sanitizeRecord(raw) {
+  const rec = emptyRecord();
   if (raw && typeof raw === 'object') {
     if (Number.isFinite(raw.you) && raw.you >= 0) rec.you = Math.floor(raw.you);
     if (Number.isFinite(raw.them) && raw.them >= 0) rec.them = Math.floor(raw.them);
@@ -54,11 +65,27 @@ function sanitizeModeRecord(raw) {
   return rec;
 }
 
+function sanitizeDifficultyMap(raw) {
+  const map = emptyDifficultyMap();
+  if (raw && typeof raw === 'object') {
+    for (const d of DIFFICULTIES) {
+      map[d] = sanitizeRecord(raw[d]);
+    }
+  }
+  return map;
+}
+
 function sanitizeStats(raw) {
   const stats = createEmptyStats();
-  if (raw && typeof raw === 'object' && raw.byMode && typeof raw.byMode === 'object') {
+  if (
+    raw &&
+    typeof raw === 'object' &&
+    raw.version === STATS_VERSION &&
+    raw.byModeDifficulty &&
+    typeof raw.byModeDifficulty === 'object'
+  ) {
     for (const v of VARIANTS) {
-      stats.byMode[v] = sanitizeModeRecord(raw.byMode[v]);
+      stats.byModeDifficulty[v] = sanitizeDifficultyMap(raw.byModeDifficulty[v]);
     }
   }
   return stats;
@@ -97,14 +124,15 @@ export function resetStats() {
 
 /**
  * Increment the appropriate bucket for a finished game.
- * @param {{ variant?: string, winner: 'A'|'B'|null }} game
+ * @param {{ variant?: string, difficulty?: string, winner: 'A'|'B'|null }} game
  * @returns {object} the new stats (also written to storage if available).
  */
-export function recordGame({ variant, winner }) {
+export function recordGame({ variant, difficulty, winner }) {
   if (winner !== 'A' && winner !== 'B') return loadStats();
   const mode = VARIANTS.includes(variant) ? variant : DEFAULT_VARIANT;
+  const diff = DIFFICULTIES.includes(difficulty) ? difficulty : DEFAULT_DIFFICULTY;
   const stats = loadStats();
-  const rec = stats.byMode[mode];
+  const rec = stats.byModeDifficulty[mode][diff];
   if (winner === 'A') rec.you += 1;
   else rec.them += 1;
   saveStats(stats);
@@ -119,19 +147,47 @@ function summarizeRecord(rec) {
   return { you, them, total, winPct };
 }
 
+function addInto(target, rec) {
+  target.you += rec.you;
+  target.them += rec.them;
+}
+
 /**
- * Derive an overall totals object plus per-mode summaries.
+ * Derive an overall totals object plus per-mode, per-difficulty,
+ * and (mode x difficulty) summaries.
  * @param {object} [stats] - defaults to loadStats() if omitted.
  */
 export function getSummary(stats) {
   const s = stats ?? loadStats();
-  const overallRec = emptyModeRecord();
-  const byMode = {};
+  const overallRec = emptyRecord();
+  const byModeRec = {};
+  const byDifficultyRec = {};
+  const byModeDifficulty = {};
+
+  for (const v of VARIANTS) byModeRec[v] = emptyRecord();
+  for (const d of DIFFICULTIES) byDifficultyRec[d] = emptyRecord();
+
   for (const v of VARIANTS) {
-    const rec = s.byMode[v] ?? emptyModeRecord();
-    byMode[v] = summarizeRecord(rec);
-    overallRec.you += rec.you;
-    overallRec.them += rec.them;
+    byModeDifficulty[v] = {};
+    const diffMap = s.byModeDifficulty?.[v] ?? emptyDifficultyMap();
+    for (const d of DIFFICULTIES) {
+      const rec = diffMap[d] ?? emptyRecord();
+      byModeDifficulty[v][d] = summarizeRecord(rec);
+      addInto(byModeRec[v], rec);
+      addInto(byDifficultyRec[d], rec);
+      addInto(overallRec, rec);
+    }
   }
-  return { overall: summarizeRecord(overallRec), byMode };
+
+  const byMode = {};
+  for (const v of VARIANTS) byMode[v] = summarizeRecord(byModeRec[v]);
+  const byDifficulty = {};
+  for (const d of DIFFICULTIES) byDifficulty[d] = summarizeRecord(byDifficultyRec[d]);
+
+  return {
+    overall: summarizeRecord(overallRec),
+    byMode,
+    byDifficulty,
+    byModeDifficulty,
+  };
 }

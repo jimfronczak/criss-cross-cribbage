@@ -189,4 +189,12 @@ Brief summary of decisions and changes from development sessions, for future ref
 - **GitHub Pages rollout complete.** Repository is on GitHub, `deploy.yml` workflow builds and publishes on push, and the live site has been verified: external users have loaded the URL, installed the PWA, and played offline successfully.
 - **Live URL:** https://jimfronczak.github.io/criss-cross-cribbage/
 
-*Last updated: Added Stats tab — per-Game-Mode win/loss record stored in browser localStorage, with overall totals, win rate, and a confirmed Reset button.*
+### Stats v2 — difficulty cross-tab
+- **`src/game/stats.js`**: bumped `STATS_VERSION` from 1 to 2 (storage key unchanged at `cricrib:v1:stats`). Replaced `byMode` with a 2-level cross-tab `byModeDifficulty: { classic: { easy, medium, hard }, noCrib: { easy, medium, hard } }`, each leaf still `{ you, them }`. `sanitizeStats` now requires `version === STATS_VERSION`, so any older payload is treated as empty on load — that gives a one-time clean wipe of legacy v1 data with no explicit migration code. `DIFFICULTIES` is imported from `../ai/strategy.js` so the schema and AI stay in sync.
+- **`recordGame({ variant, difficulty, winner })`**: now also takes `difficulty`; falls back to `'medium'` (`DEFAULT_DIFFICULTY`) if missing/unknown so data is never silently dropped.
+- **`getSummary(stats)`**: returns `{ overall, byMode, byDifficulty, byModeDifficulty }`. `byMode` and `byDifficulty` are derived rollups; the UI uses `byMode` (per-mode totals) and `byModeDifficulty` (per-cell breakdown).
+- **`src/Game.jsx`**: end-of-game `recordGame(...)` call now passes `difficulty` from component state; effect dep array updated.
+- **`src/App.jsx`**: Stats tab intro updated to "by Game Mode and Difficulty". The "By Game Mode" section is now "By Game Mode and Difficulty"; each mode card shows a per-mode rollup at top, then three difficulty rows (Easy / Medium / Hard) — each row prints `You X – Them Y` plus `NN% (M games)`, or a muted "No games yet" placeholder for empty buckets. New `DifficultyRow` component encapsulates the per-cell formatting.
+- **`src/App.css`**: new `.stats-mode-rollup` (top section of each mode card with bottom divider), `.stats-diff-list`, `.stats-diff-row`, `.stats-diff-label`, `.stats-diff-record`, `.stats-diff-score`, `.stats-diff-meta`, `.stats-diff-empty`, `.stats-diff-row-empty` styles. Existing `.rules-variants` / `.rules-variant-card` grid is reused unchanged.
+
+*Last updated: Stats v2 — added Difficulty dimension (Easy/Medium/Hard) cross-tabbed with Game Mode; storage version bumped to 2 (legacy v1 records are wiped on first load).*

@@ -156,6 +156,13 @@ const MODE_LABELS = {
   noCrib:  { title: 'No-Crib', subtitle: '6 cards, no crib' },
 }
 
+const DIFFICULTY_ORDER = ['easy', 'medium', 'hard']
+const DIFFICULTY_LABELS = {
+  easy:   'Easy',
+  medium: 'Medium',
+  hard:   'Hard',
+}
+
 function RecordLine({ rec }) {
   if (rec.total === 0) {
     return <p className="stats-empty">No games yet.</p>
@@ -175,6 +182,25 @@ function RecordLine({ rec }) {
   )
 }
 
+function DifficultyRow({ label, rec }) {
+  const empty = rec.total === 0
+  return (
+    <div className={`stats-diff-row ${empty ? 'stats-diff-row-empty' : ''}`}>
+      <span className="stats-diff-label">{label}</span>
+      {empty ? (
+        <span className="stats-diff-empty">No games yet</span>
+      ) : (
+        <span className="stats-diff-record">
+          <span className="stats-diff-score">You {rec.you} &ndash; Them {rec.them}</span>
+          <span className="stats-diff-meta">
+            {rec.winPct}% ({rec.total} game{rec.total === 1 ? '' : 's'})
+          </span>
+        </span>
+      )}
+    </div>
+  )
+}
+
 function Stats() {
   const [stats, setStats] = useState(() => loadStats())
   const summary = getSummary(stats)
@@ -191,7 +217,7 @@ function Stats() {
     <div className="stats">
       <h2>Stats</h2>
       <p className="stats-intro">
-        Your win/loss record against the AI, by Game Mode.
+        Your win/loss record against the AI, by Game Mode and Difficulty.
       </p>
 
       <section className="stats-section stats-overall">
@@ -200,7 +226,7 @@ function Stats() {
       </section>
 
       <section className="stats-section">
-        <h3>By Game Mode</h3>
+        <h3>By Game Mode and Difficulty</h3>
         <div className="rules-variants">
           {['classic', 'noCrib'].map((mode) => (
             <div key={mode} className="rules-variant-card">
@@ -208,7 +234,18 @@ function Stats() {
                 {MODE_LABELS[mode].title}
                 <span className="rules-variant-tag">{MODE_LABELS[mode].subtitle}</span>
               </h4>
-              <RecordLine rec={summary.byMode[mode]} />
+              <div className="stats-mode-rollup">
+                <RecordLine rec={summary.byMode[mode]} />
+              </div>
+              <div className="stats-diff-list">
+                {DIFFICULTY_ORDER.map((diff) => (
+                  <DifficultyRow
+                    key={diff}
+                    label={DIFFICULTY_LABELS[diff]}
+                    rec={summary.byModeDifficulty[mode][diff]}
+                  />
+                ))}
+              </div>
             </div>
           ))}
         </div>

@@ -353,10 +353,10 @@ export default function Game() {
       const go = checkGameOver(r.newScores, winTarget);
       if (go.over) {
         setGameOverInfo(go);
-        recordGame({ variant: gs.variant, winner: go.winner });
+        recordGame({ variant: gs.variant, difficulty, winner: go.winner });
       }
     }
-  }, [gs?.phase, roundResult, winTarget]);
+  }, [gs?.phase, roundResult, winTarget, difficulty]);
 
   /* Clear hint when turn or phase changes */
   useEffect(() => {

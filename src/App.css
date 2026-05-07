@@ -211,6 +211,60 @@
   font-style: italic;
   font-size: 0.9rem;
 }
+.stats-mode-rollup {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #2a3344;
+}
+.stats-mode-rollup .stats-mode-record {
+  justify-content: flex-start;
+  font-size: 1rem;
+}
+.stats-mode-rollup .stats-winpct {
+  margin-top: 2px;
+}
+.stats-diff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stats-diff-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+.stats-diff-label {
+  flex: 0 0 auto;
+  color: #b8c2d4;
+  font-weight: 600;
+}
+.stats-diff-record {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 4px 8px;
+  text-align: right;
+}
+.stats-diff-score {
+  color: #e8eef7;
+}
+.stats-diff-meta {
+  color: #888;
+  font-size: 0.82rem;
+}
+.stats-diff-empty {
+  color: #777;
+  font-style: italic;
+  font-size: 0.82rem;
+}
+.stats-diff-row-empty .stats-diff-label {
+  color: #777;
+  font-weight: 500;
+}
+
 .stats-reset {
   margin-top: 28px;
   text-align: center;
